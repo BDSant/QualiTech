@@ -1,0 +1,7 @@
+Criar Migration do zero
+
+Add-Migration InitialCreate -Project OsLog.Infrastructure -StartupProject OsLog.Api -OutputDir EntityFramework\Migrations
+
+Aplicar Migrations no Banco de Dados
+Update-Database -Project OsLog.Infrastructure -StartupProject OsLog.Api
+

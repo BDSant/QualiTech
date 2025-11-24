@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="LEIA-ME.txt" />
+  </Folder>
+  <Project Path="OsLog.API/OsLog.API.csproj" />
+  <Project Path="OsLog.Application.Tests/OsLog.Tests.csproj" />
+  <Project Path="OsLog.Application/OsLog.Application.csproj" />
+  <Project Path="OsLog.Domain/OsLog.Domain.csproj" />
+  <Project Path="OsLog.Infrastructure/OsLog.Infrastructure.csproj" Id="64f235f8-7532-4ee6-a470-bc75349d90c3" />
+</Solution>
