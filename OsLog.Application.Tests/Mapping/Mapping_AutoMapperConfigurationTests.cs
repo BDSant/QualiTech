@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using OsLog.Application.Mapping;
 
 namespace OsLog.Mapping.Tests.Mapping;
 
@@ -11,8 +10,11 @@ public class Mapping_AutoMapperConfigurationTests
     {
         _config = new MapperConfiguration(cfg =>
         {
-            // Carrega todos os Profiles do assembly de Application
-            cfg.AddMaps(typeof(ClienteProfile).Assembly);
+            var appAssemblies = AppDomain.CurrentDomain.GetAssemblies()
+                .Where(a => a.FullName != null 
+                && a.FullName.StartsWith("OsLog."));
+
+            cfg.AddMaps(appAssemblies);
         });
     }
 

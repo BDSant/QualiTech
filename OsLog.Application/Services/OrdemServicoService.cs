@@ -41,10 +41,6 @@ public class OrdemServicoService
 
         await _UnitOfWork.OrdensServico.AddAsync(os, ct);
 
-        // demais lógicas (acessórios, itens, histórico inicial etc.)
-
-        await _UnitOfWork.CommitAsync(ct);
-
         return os.Id;
     }
 
@@ -61,7 +57,7 @@ public class OrdemServicoService
 
     public async Task<OrdemServicoDetailDto?> ObterPorIdAsync(int id, CancellationToken ct)
     {
-        var os = await _UnitOfWork.OrdensServico.GetByIdAsync(id, ct);
+        var os = await _UnitOfWork.OrdensServico.GetDetalhadaAsync(id, ct);
 
         if (os is null || os.FlExcluido)
             return null;
@@ -340,27 +336,27 @@ public class OrdemServicoService
         return fotos.Select(_mapper.Map<OrdemServicoFotoDto>).ToList();
     }
 
-    public async Task AdicionarFotoAsync(int osId, string caminhoArquivo, string? descricao, int usuarioId, CancellationToken ct)
+    public async Task AdicionarFotoAsync(int osId, byte[] foto, string? descricao, int usuarioId, CancellationToken ct)
     {
         var os = await _UnitOfWork.OrdensServico.GetByIdAsync(osId, ct)
                  ?? throw new InvalidOperationException($"Ordem de serviço {osId} não encontrada.");
 
-        var foto = new OrdemServicoFoto
+        var objfoto = new OrdemServicoFoto
         {
             OrdemServicoId = osId,
+            Foto = foto,
             Descricao = descricao,
             DataCadastro = DateTime.UtcNow,
             FlExcluido = false,
             AlteradoPor = usuarioId
         };
 
-        await _UnitOfWork.Fotos.AddAsync(foto, ct);
+        await _UnitOfWork.Fotos.AddAsync(objfoto, ct);
 
         var hist = new StatusHistorico
         {
             OrdemServicoId = osId,
             TipoEvento = "INCLUSAO_FOTO",
-            DescricaoEvento = $"Foto adicionada: {caminhoArquivo}",
             DataEvento = DateTime.UtcNow,
             UsuarioId = usuarioId
         };

@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using OsLog.Api.Middlewares;
 using OsLog.Application.Common;
 using OsLog.Application.Interfaces.Repositories;
 using OsLog.Application.Interfaces.Services;
@@ -6,17 +8,34 @@ using OsLog.Application.Services;
 using OsLog.Infrastructure.EntityFramework;
 using OsLog.Infrastructure.Repositories;
 using OsLog.Infrastructure.UnitOfWork;
-using static System.Net.Mime.MediaTypeNames;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // 1) String de conexão (ajusta o nome conforme seu appsettings.json)
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("string de conexão 'DefaultConnection' não encontrada.");
+if (builder.Environment.IsEnvironment("Testing"))
+{
+    builder.Services.Configure<ApiBehaviorOptions>(options =>
+    {
+        options.SuppressModelStateInvalidFilter = true;
+    });
 
-// 2) Registro do DbContext
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(connectionString));
+    // Banco em memória para testes de integração
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseInMemoryDatabase("OsLogTestsDb"));
+}
+else if (builder.Environment.IsDevelopment())
+{
+    //builder.Configuration.AddJsonFile("appsettings.Development.json", optional: false, reloadOnChange: true);
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+            ?? throw new InvalidOperationException("string de conexão 'DefaultConnection' não encontrada.");
+
+    // 2) Registro do DbContext - Contexto de acesso ao Banco de Dados
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseSqlServer(connectionString));
+}
+
+
+
 
 // 3) Repositórios
 builder.Services.AddScoped<IOrdemServicoRepository, OrdemServicoRepository>();
@@ -28,32 +47,23 @@ builder.Services.AddScoped<IOrdemServicoFotoRepository, OrdemServicoFotoReposito
 builder.Services.AddScoped<IOrdemServicoComissaoRepository, OrdemServicoComissaoRepository>();
 builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
 builder.Services.AddScoped<ITecnicoRepository, TecnicoRepository>();
+builder.Services.AddScoped<IEmpresaRepository, EmpresaRepository>();
+builder.Services.AddScoped<IUnidadeRepository, UnidadeRepository>();
 
-//builder.Services.AddScoped<IEmpresaRepository, EmpresaRepository>();
-//builder.Services.AddScoped<IUnidadeRepository, UnidadeRepository>();
+builder.Services.AddScoped<ITecnicoService, TecnicoService>();
 builder.Services.AddScoped<IEmpresaService, EmpresaService>();
 builder.Services.AddScoped<IUnidadeService, UnidadeService>();
-
-
 
 // 3.1) UnitOfWork
 builder.Services.AddScoped<IUnitOfWork, EfUnitOfWork>();
 
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 
-// 4) Serviços de aplicação
-builder.Services.AddScoped<ClienteService>();
-builder.Services.AddScoped<OrdemServicoService>();
-builder.Services.AddScoped<PagamentoService>();
-builder.Services.AddScoped<TecnicoService>();
-builder.Services.AddScoped<EmpresaService>();
-builder.Services.AddScoped<UnidadeService>();
-
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// AutoMapper
+// AutoMapper - Carrega todos os profiles do assembly
 //builder.Services.AddAutoMapper(typeof(OsLogProfile));
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
@@ -78,6 +88,7 @@ if (!app.Environment.IsEnvironment("Testing"))
 }
 
 app.UseHttpsRedirection();
+app.UseOsLogExceptionHandling();
 app.UseAuthorization();
 app.MapControllers();
 

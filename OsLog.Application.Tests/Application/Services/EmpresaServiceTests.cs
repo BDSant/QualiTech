@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using AutoMapper;
+﻿using AutoMapper;
 using Moq;
 using OsLog.Application.Common;
 using OsLog.Application.DTOs.Empresa;
 using OsLog.Application.Services;
 using OsLog.Domain.Entities;
-using Xunit;
 
 namespace OsLog.Tests.Application.Services;
 
@@ -157,7 +152,7 @@ public class EmpresaServiceTests
         {
             RazaoSocial = "ConsertaSmart ME",
             NomeFantasia = "ConsertaSmart",
-            Cnpj = "12.345.678/0001-99"
+            Cnpj = "12312.345.678/0001-99"
         };
 
         Empresa? empresaCapturada = null;
