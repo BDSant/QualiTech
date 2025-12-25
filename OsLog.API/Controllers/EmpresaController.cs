@@ -95,10 +95,7 @@ public class EmpresaController : ControllerBase
     }
 
     [HttpPost("{empresaId:int}/unidades")]
-    public async Task<IActionResult> CriarUnidade(
-        int empresaId,
-        [FromBody] UnidadeCreateDto dto,
-        CancellationToken ct)
+    public async Task<IActionResult> CriarUnidade(int empresaId, [FromBody] UnidadeCreateDto dto, CancellationToken ct)
     {
         if (!ModelState.IsValid)
             return this.ValidationProblemOsLog(ModelState);

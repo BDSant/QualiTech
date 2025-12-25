@@ -30,9 +30,5 @@ public class PagamentoOsConfiguration : IEntityTypeConfiguration<PagamentoOs>
         builder.Property(p => p.DataRegistro)
             .IsRequired();
 
-        builder.HasOne(p => p.OrdemServico)
-            .WithMany(os => os.Pagamentos)
-            .HasForeignKey(p => p.OrdemServicoId)
-            .OnDelete(DeleteBehavior.Cascade);
     }
 }

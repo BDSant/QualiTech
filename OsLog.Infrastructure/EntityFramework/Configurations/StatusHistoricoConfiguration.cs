@@ -25,9 +25,6 @@ public class StatusHistoricoConfiguration : IEntityTypeConfiguration<StatusHisto
         builder.Property(s => s.DataEvento)
             .IsRequired();
 
-        builder.HasOne(s => s.OrdemServico)
-            .WithMany(os => os.Historicos)
-            .HasForeignKey(s => s.OrdemServicoId)
-            .OnDelete(DeleteBehavior.Cascade);
+
     }
 }

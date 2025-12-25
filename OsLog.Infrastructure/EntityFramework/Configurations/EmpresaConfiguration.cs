@@ -28,5 +28,16 @@ public class EmpresaConfiguration : IEntityTypeConfiguration<Empresa>
 
         builder.Property(e => e.DataCriacao)
             .IsRequired();
+
+        // Relacionamentos
+        builder.HasMany(e => e.Unidades)
+            .WithOne(u => u.Empresa)
+            .HasForeignKey(u => u.EmpresaId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(e => e.UsuariosAcesso)
+            .WithOne(ua => ua.Empresa)
+            .HasForeignKey(ua => ua.EmpresaId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

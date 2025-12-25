@@ -10,43 +10,34 @@ public class EfUnitOfWork : IUnitOfWork
 
     public EfUnitOfWork(
         AppDbContext context,
-        IOrdemServicoRepository ordensServico,
         IOrcamentoItemRepository orcamentoItens,
         IPagamentoRepository pagamentos,
         IStatusHistoricoRepository statusHistoricos,
-        IOrdemServicoAcessorioRepository acessorios,
-        IOrdemServicoFotoRepository fotos,
-        IOrdemServicoComissaoRepository comissoes,
         IClienteRepository clientes,
         ITecnicoRepository tecnicos,
         IEmpresaRepository empresas,
-        IUnidadeRepository unidades)
+        IUnidadeRepository unidades,
+        IUsuarioAcessoRepository usuarioAcessos)
     {
         _context = context;
-        OrdensServico = ordensServico;
         OrcamentoItens = orcamentoItens;
         Pagamentos = pagamentos;
         StatusHistoricos = statusHistoricos;
-        Acessorios = acessorios;
-        Fotos = fotos;
-        Comissoes = comissoes;
         Clientes = clientes;
         Tecnicos = tecnicos;
         Empresas = empresas;
         Unidades = unidades;
+        UsuarioAcessos = usuarioAcessos;
     }
 
-    public IOrdemServicoRepository OrdensServico { get; }
     public IOrcamentoItemRepository OrcamentoItens { get; }
     public IPagamentoRepository Pagamentos { get; }
     public IStatusHistoricoRepository StatusHistoricos { get; }
-    public IOrdemServicoAcessorioRepository Acessorios { get; }
-    public IOrdemServicoFotoRepository Fotos { get; }
-    public IOrdemServicoComissaoRepository Comissoes { get; }
     public IClienteRepository Clientes { get; }
     public ITecnicoRepository Tecnicos { get; }
     public IEmpresaRepository Empresas { get; }
     public IUnidadeRepository Unidades { get; }
+    public IUsuarioAcessoRepository UsuarioAcessos { get; }
 
     public async Task<int> CommitAsync(CancellationToken ct = default)
         => await _context.SaveChangesAsync(ct);

@@ -8,7 +8,6 @@ using OsLog.Application.Services;
 using OsLog.Domain.Entities;
 using OsLog.Infrastructure.EntityFramework;
 using OsLog.Infrastructure.Repositories;
-using System;
 
 namespace OsLog.Tests.Integration.Services
 {
@@ -34,17 +33,15 @@ namespace OsLog.Tests.Integration.Services
                 Unidades = new UnidadeRepository(ctx);
             }
 
-            public IOrdemServicoRepository OrdensServico => throw new NotImplementedException();
             public IOrcamentoItemRepository OrcamentoItens => throw new NotImplementedException();
             public IPagamentoRepository Pagamentos => throw new NotImplementedException();
             public IStatusHistoricoRepository StatusHistoricos => throw new NotImplementedException();
-            public IOrdemServicoAcessorioRepository Acessorios => throw new NotImplementedException();
-            public IOrdemServicoFotoRepository Fotos => throw new NotImplementedException();
-            public IOrdemServicoComissaoRepository Comissoes => throw new NotImplementedException();
             public IClienteRepository Clientes => throw new NotImplementedException();
             public ITecnicoRepository Tecnicos => throw new NotImplementedException();
             public IEmpresaRepository Empresas { get; }
             public IUnidadeRepository Unidades { get; }
+            public IUsuarioAcessoRepository UsuarioAcessos => throw new NotImplementedException();
+
             public Task<int> CommitAsync(CancellationToken ct = default) => _ctx.SaveChangesAsync(ct);
             public ValueTask DisposeAsync() => _ctx.DisposeAsync();
         }

@@ -11,5 +11,4 @@ public class StatusHistorico
     public DateTime DataEvento { get; set; } = DateTime.UtcNow;
     public int? UsuarioId { get; set; }
 
-    public OrdemServico OrdemServico { get; set; } = null!;
 }

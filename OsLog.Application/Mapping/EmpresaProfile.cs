@@ -38,7 +38,6 @@ public class EmpresaProfile : Profile
             .ForMember(d => d.FlExcluido, opt => opt.Ignore())
             .ForMember(d => d.DataCriacao, opt => opt.Ignore())
             .ForMember(d => d.DataAlteracao, opt => opt.Ignore())
-            .ForMember(d => d.AlteradoPor, opt => opt.Ignore())
-            .ForMember(d => d.OrdensServico, opt => opt.Ignore());
+            .ForMember(d => d.AlteradoPor, opt => opt.Ignore());
     }
 }

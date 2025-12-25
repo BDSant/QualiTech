@@ -18,5 +18,5 @@ public class Cliente
     public int? AlteradoPor { get; set; }
 
     // Navegação
-    public ICollection<OrdemServico> OrdensServico { get; set; } = new List<OrdemServico>();
+    //public ICollection<OrdemServico> OrdensServico { get; set; } = new List<OrdemServico>();
 }

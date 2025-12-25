@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using OsLog.Domain.Entities;
 
-namespace OsLog.Infrastructure.EF.Configurations;
+namespace OsLog.Infrastructure.EntityFramework.Configurations.EmpresaConfig;
 
 public class UnidadeConfiguration : IEntityTypeConfiguration<Unidade>
 {
@@ -41,10 +41,5 @@ public class UnidadeConfiguration : IEntityTypeConfiguration<Unidade>
             .WithMany(e => e.Unidades)
             .HasForeignKey(u => u.EmpresaId)
             .OnDelete(DeleteBehavior.Cascade);
-
-        // Índice único (EmpresaId + Cnpj), exceto quando Cnpj for null
-        builder.HasIndex(u => new { u.EmpresaId, u.Cnpj })
-            .IsUnique()
-            .HasFilter("[Cnpj] IS NOT NULL");
     }
 }

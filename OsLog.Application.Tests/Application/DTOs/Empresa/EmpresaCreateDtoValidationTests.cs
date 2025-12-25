@@ -1,7 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using OsLog.Application.DTOs.Empresa;
 using System.ComponentModel.DataAnnotations;
-using OsLog.Application.DTOs.Empresa;
-using Xunit;
 
 namespace OsLog.Tests.Application.DTOs.Empresa
 {
@@ -139,7 +137,7 @@ namespace OsLog.Tests.Application.DTOs.Empresa
             {
                 RazaoSocial = "ConsertaSmart ME",
                 NomeFantasia = "ConsertaSmart",
-                Cnpj = null // ou string.Empty
+                Cnpj = null
             };
 
             // Act
@@ -162,7 +160,7 @@ namespace OsLog.Tests.Application.DTOs.Empresa
             {
                 RazaoSocial = "ConsertaSmart ME",
                 NomeFantasia = "ConsertaSmart",
-                Cnpj = "12345678" // inválido
+                Cnpj = "12345678"
             };
 
             // Act

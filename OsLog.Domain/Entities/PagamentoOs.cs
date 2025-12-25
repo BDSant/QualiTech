@@ -12,6 +12,6 @@ public class PagamentoOs
     public DateTime? DataConfirmacao { get; set; }
     public bool FlExcluido { get; set; }
 
-    // Navegação
-    public OrdemServico OrdemServico { get; set; } = null!;
+    //// Navegação
+    //public OrdemServico OrdemServico { get; set; } = null!;
 }

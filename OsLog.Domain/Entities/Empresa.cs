@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace OsLog.Domain.Entities;
+﻿namespace OsLog.Domain.Entities;
 
 public class Empresa
 {
@@ -22,4 +18,5 @@ public class Empresa
 
     // Navegações
     public ICollection<Unidade> Unidades { get; set; } = new List<Unidade>();
+    public ICollection<UsuarioAcesso> UsuariosAcesso { get; set; } = new List<UsuarioAcesso>();
 }

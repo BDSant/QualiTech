@@ -13,6 +13,6 @@ public class Tecnico
     public DateTime? DataAlteracao { get; set; }
     public int? AlteradoPor { get; set; }
 
-    public ICollection<OrdemServico> OrdensServico { get; set; } = new List<OrdemServico>();
-    public ICollection<OrdemServicoComissao> Comissoes { get; set; } = new List<OrdemServicoComissao>();
+    //public ICollection<OrdemServico> OrdensServico { get; set; } = new List<OrdemServico>();
+    //public ICollection<OrdemServicoComissao> Comissoes { get; set; } = new List<OrdemServicoComissao>();
 }
