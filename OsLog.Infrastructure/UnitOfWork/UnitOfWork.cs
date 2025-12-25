@@ -4,11 +4,11 @@ using OsLog.Infrastructure.EntityFramework;
 
 namespace OsLog.Infrastructure.UnitOfWork;
 
-public class EfUnitOfWork : IUnitOfWork
+public class UnitOfWork : IUnitOfWork
 {
     private readonly AppDbContext _context;
 
-    public EfUnitOfWork(
+    public UnitOfWork(
         AppDbContext context,
         IOrcamentoItemRepository orcamentoItens,
         IPagamentoRepository pagamentos,

@@ -1,36 +1,35 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-	<TargetFramework>net10.0</TargetFramework>
-	<ImplicitUsings>enable</ImplicitUsings>
-	<Nullable>enable</Nullable>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-	<!-- EF Core 8.x -->
-	<PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.8" />
-	<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.8">
-	  <PrivateAssets>all</PrivateAssets>
-	  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-	</PackageReference>
-	<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.8" />
-	<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.8">
-	  <PrivateAssets>all</PrivateAssets>
-	  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-	</PackageReference>
+    <!-- EF Core 10.x -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
 
-	<!-- Identity + EF Core -->
-	<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.8" />
+    <!-- Identity -->
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.1" />
+
+    <!-- NetDevPack JWKS Store -->
+    <PackageReference Include="NetDevPack.Security.Jwt.Core" Version="8.2.2" />
+    <PackageReference Include="NetDevPack.Security.Jwt.Store.EntityFrameworkCore" Version="8.2.2" />
   </ItemGroup>
 
   <ItemGroup>
-	<ProjectReference Include="..\OsLog.Application\OsLog.Application.csproj" />
-	<ProjectReference Include="..\OsLog.Domain\OsLog.Domain.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="EntityFramework\Migrations\" />
-    <Folder Include="Migrations\" />
+    <ProjectReference Include="..\OsLog.Application\OsLog.Application.csproj" />
+    <ProjectReference Include="..\OsLog.Domain\OsLog.Domain.csproj" />
   </ItemGroup>
 
 </Project>

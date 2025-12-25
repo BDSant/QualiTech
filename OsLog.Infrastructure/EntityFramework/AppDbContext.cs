@@ -1,27 +1,23 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using NetDevPack.Security.Jwt.Core.Model;
+using NetDevPack.Security.Jwt.Store.EntityFrameworkCore;
 using OsLog.Domain.Entities;
 using OsLog.Infrastructure.Identity;
 
 namespace OsLog.Infrastructure.EntityFramework;
 
-public class AppDbContext : IdentityDbContext<ApplicationUser>
+public class AppDbContext : IdentityDbContext<ApplicationUser>, ISecurityKeyContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
     public DbSet<Empresa> Empresas { get; set; } = null!;
-    public DbSet<Unidade> Unidades { get; set; } = null!;
-    public DbSet<UsuarioAcesso> UsuarioAcessos { get; set; } = null!;
-    public DbSet<Cliente> Clientes => Set<Cliente>();
-    public DbSet<Tecnico> Tecnicos => Set<Tecnico>();
 
-    //public DbSet<OrdemServico> OrdemServicos => Set<OrdemServico>();
-    //public DbSet<OrcamentoItem> OrcamentoItens => Set<OrcamentoItem>();
-    //public DbSet<OrdemServicoAcessorio> OrdemServicoAcessorios => Set<OrdemServicoAcessorio>();
-    //public DbSet<OrdemServicoFoto> OrdemServicoFotos => Set<OrdemServicoFoto>();
-    //public DbSet<OrdemServicoComissao> OrdemServicoComissoes => Set<OrdemServicoComissao>();
-    //public DbSet<PagamentoOs> PagamentosOs => Set<PagamentoOs>();
-    //public DbSet<StatusHistorico> StatusHistoricos => Set<StatusHistorico>();
+    // Implementação correta da interface (tipo e nome exatamente como exigido)
+    public DbSet<KeyMaterial> SecurityKeys { get; set; } = null!;
+
+    // Seus Refresh Tokens
+    public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

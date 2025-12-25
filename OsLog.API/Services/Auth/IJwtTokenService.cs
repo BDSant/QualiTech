@@ -1,5 +1,5 @@
 ﻿using System.Security.Claims;
-using OsLog.Api.DTOs.Auth;
+using OsLog.Application.DTOs.Auth;
 
 namespace OsLog.API.Services.Auth;
 
@@ -15,9 +15,12 @@ public interface IJwtTokenService
     /// <param name="additionalClaims">Outras claims que você queira acrescentar</param>
     Task<TokenResponseDto> GenerateTokensAsync(
         string userId,
-        string? email,
-        string? userName,
+        string email,
         IEnumerable<string> roles,
         IEnumerable<Claim>? additionalClaims = null,
         CancellationToken ct = default);
+
+    Task<TokenResponseDto> RefreshAsync(string refreshToken, CancellationToken ct = default);
+
+    Task LogoutAsync(string refreshToken, CancellationToken ct = default);
 }

@@ -296,13 +296,8 @@
 //        }
 //    }
 //}
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Threading;
-using System.Threading.Tasks;
 using AutoMapper;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using OsLog.Application.Common;                 // IUnitOfWork
 using OsLog.Application.DTOs.Empresa;
@@ -310,7 +305,7 @@ using OsLog.Application.Interfaces.Repositories;
 using OsLog.Application.Mapping;
 using OsLog.Application.Services;
 using OsLog.Domain.Entities;
-using Xunit;
+using System.Linq.Expressions;
 
 namespace OsLog.Tests.Moq.Services
 {
@@ -347,7 +342,7 @@ namespace OsLog.Tests.Moq.Services
             var cfg = new MapperConfiguration(c =>
             {
                 c.AddMaps(typeof(EmpresaProfile).Assembly);
-            });
+            }, NullLoggerFactory.Instance);
 
             _mapper = cfg.CreateMapper();
             _service = new EmpresaService(_uowMock.Object, _mapper);

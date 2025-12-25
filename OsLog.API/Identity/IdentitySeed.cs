@@ -1,7 +1,6 @@
-﻿using System.Security.Claims;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using OsLog.Infrastructure.EntityFramework;
 using OsLog.Infrastructure.Identity;
 
 namespace OsLog.Api.Identity;
@@ -12,11 +11,11 @@ public static class IdentitySeed
     {
         using var scope = services.CreateScope();
 
+        var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        // 1) Garante que as roles existem (incluindo Master)
+        // Roles
         var roles = new[]
         {
             "Master",
@@ -26,22 +25,18 @@ public static class IdentitySeed
             "Tecnico"
         };
 
-        foreach (var roleName in roles)
+        foreach (var role in roles)
         {
-            if (!await roleManager.RoleExistsAsync(roleName))
-            {
-                var result = await roleManager.CreateAsync(new IdentityRole(roleName));
-                if (!result.Succeeded)
-                    throw new Exception($"Erro ao criar role '{roleName}': {string.Join(", ", result.Errors.Select(e => e.Description))}");
-            }
+            if (!await roleManager.RoleExistsAsync(role))
+                await roleManager.CreateAsync(new IdentityRole(role));
         }
 
-        // 2) Cria o usuário Master, se ainda não existir
-        const string masterEmail = "master@oslog.local";
-        const string masterPassword = "Master@123"; // depois troca isso em produção 😉
+        // Master (via config/env)
+        var masterEmail = config["IdentitySeed:MasterEmail"] ?? "master@oslog.local";
+        var masterPassword = config["IdentitySeed:MasterPassword"] ?? "Master@123456";
 
         var masterUser = await userManager.FindByEmailAsync(masterEmail);
-        if (masterUser == null)
+        if (masterUser is null)
         {
             masterUser = new ApplicationUser
             {
@@ -50,28 +45,16 @@ public static class IdentitySeed
                 EmailConfirmed = true
             };
 
-            var createResult = await userManager.CreateAsync(masterUser, masterPassword);
-            if (!createResult.Succeeded)
-            {
-                throw new Exception($"Erro ao criar usuário Master: {string.Join(", ", createResult.Errors.Select(e => e.Description))}");
-            }
-
-            // coloca na role Master
-            var addRoleResult = await userManager.AddToRoleAsync(masterUser, "Master");
-            if (!addRoleResult.Succeeded)
-            {
-                throw new Exception($"Erro ao atribuir role Master: {string.Join(", ", addRoleResult.Errors.Select(e => e.Description))}");
-            }
-
-            // Claims básicas pro Master (opcional)
-            await userManager.AddClaimsAsync(masterUser, new[]
-            {
-                new Claim("nome", "Usuário Master"),
-                new Claim("tipo_usuario", "master")
-            });
+            var create = await userManager.CreateAsync(masterUser, masterPassword);
+            if (!create.Succeeded) return;
         }
 
-        // Aqui, se você quiser, pode também criar uma empresa DEMO e vincular o Master,
-        // mas como o Master enxerga tudo, nem é obrigatório ter registros em UsuarioAcesso.
+        if (!await userManager.IsInRoleAsync(masterUser, "Master"))
+            await userManager.AddToRoleAsync(masterUser, "Master");
+
+        // Claims mínimas para “super visão” (exemplo)
+        var existingClaims = await userManager.GetClaimsAsync(masterUser);
+        if (!existingClaims.Any(c => c.Type == "scope" && c.Value == "global"))
+            await userManager.AddClaimAsync(masterUser, new System.Security.Claims.Claim("scope", "global"));
     }
 }

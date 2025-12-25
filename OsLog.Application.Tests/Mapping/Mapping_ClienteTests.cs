@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.Extensions.Logging.Abstractions;
 using OsLog.Application.DTOs.Clientes;
 using OsLog.Application.Mapping;
 using OsLog.Domain.Entities;
@@ -14,7 +15,7 @@ public class Mapping_ClienteTests
         var config = new MapperConfiguration(cfg =>
         {
             cfg.AddProfile<ClienteProfile>();
-        });
+        }, NullLoggerFactory.Instance);
 
         _mapper = config.CreateMapper();
     }

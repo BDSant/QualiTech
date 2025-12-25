@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/Solution Items/">
     <File Path="LEIA-ME.txt" />
+    <File Path="NuGet.config" />
   </Folder>
   <Project Path="OsLog.API/OsLog.API.csproj" />
   <Project Path="OsLog.Application.Tests/OsLog.Tests.csproj" />

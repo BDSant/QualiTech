@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.Extensions.Logging.Abstractions;
 using OsLog.Application.DTOs.Tecnicos;
 using OsLog.Application.Mapping;
 using OsLog.Domain.Entities;
@@ -15,7 +16,7 @@ public class Mapping_TecnicoTests
         var config = new MapperConfiguration(cfg =>
         {
             cfg.AddProfile<TecnicoProfile>();
-        });
+        }, NullLoggerFactory.Instance);
 
         _mapper = config.CreateMapper();
     }

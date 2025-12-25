@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using OsLog.Application.Common;
 using OsLog.Application.DTOs.Empresa;
@@ -63,7 +64,9 @@ namespace OsLog.Tests.Integration.Services
             var mapperConfig = new MapperConfiguration(cfg =>
             {
                 cfg.AddMaps(typeof(EmpresaProfile).Assembly);
-            });
+            }, NullLoggerFactory.Instance);
+
+            mapperConfig.AssertConfigurationIsValid();
 
             var mapper = mapperConfig.CreateMapper();
             var service = new EmpresaService(uow, mapper);

@@ -1,148 +1,193 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
 using OsLog.Api.Configuration;
-using OsLog.Api.Middlewares;
+using OsLog.Api.Identity;
+using OsLog.Api.Services.Auth;
 using OsLog.API.Services.Auth;
 using OsLog.Application.Common;
 using OsLog.Application.Interfaces.Repositories;
 using OsLog.Application.Interfaces.Services;
+using OsLog.Application.Mapping;
 using OsLog.Application.Services;
 using OsLog.Infrastructure.EntityFramework;
 using OsLog.Infrastructure.Identity;
 using OsLog.Infrastructure.Repositories;
 using OsLog.Infrastructure.UnitOfWork;
-using System.Text;
+using M = Microsoft.OpenApi;
+using System.Collections.Generic;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1) String de conexão (ajusta o nome conforme seu appsettings.json)
-if (builder.Environment.IsEnvironment("Testing"))
+// Controllers / Swagger
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+
+//builder.Services.AddSwaggerGen(options =>
+//{
+//    options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+//    {
+//        Title = "OsLog.API",
+//        Version = "v1"
+//    });
+
+//    options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+//    {
+//        Name = "Authorization",
+//        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+//        Scheme = "bearer",
+//        BearerFormat = "JWT",
+//        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+//        Description = "Informe: Bearer {seu_token}"
+//    });
+
+//    options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+//    {
+//        {
+//            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+//            {
+//                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+//                {
+//                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+//                    Id = "Bearer"
+//                }
+//            },
+//            Array.Empty<string>()
+//        }
+//    });
+//});
+
+
+builder.Services.AddSwaggerGen(options =>
 {
-    builder.Services.Configure<ApiBehaviorOptions>(options =>
+    options.SwaggerDoc("v1", new M.OpenApiInfo
     {
-        options.SuppressModelStateInvalidFilter = true;
+        Title = "OsLog.API",
+        Version = "v1"
     });
 
-    // Banco em memória para testes de integração
-    builder.Services.AddDbContext<AppDbContext>(options =>
-        options.UseInMemoryDatabase("OsLogTestsDb"));
-}
-else if (builder.Environment.IsDevelopment())
-{
-    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-            ?? throw new InvalidOperationException("string de conexão 'DefaultConnection' não encontrada.");
+    options.AddSecurityDefinition("Bearer", new M.OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = M.SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = M.ParameterLocation.Header,
+        Description = "Informe: Bearer {seu_token}"
+    });
 
-    // 2) Registro do DbContext - Contexto de acesso ao Banco de Dados
+    // Forma compatível com o modelo atual (sem scheme.Reference = ...)
+    options.AddSecurityRequirement(document => new M.OpenApiSecurityRequirement
+    {
+        [new M.OpenApiSecuritySchemeReference("Bearer", document)] = []
+    });
+});
+
+
+// Options
+builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
+
+// DbContext (mesma lógica para todos os ambientes; muda apenas provider)
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+if (builder.Environment.IsEnvironment("Testing"))
+{
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseInMemoryDatabase("OsLog_TestDb"));
+}
+else
+{
     builder.Services.AddDbContext<AppDbContext>(options =>
         options.UseSqlServer(connectionString));
-
-    builder.Services
-        .AddIdentity<ApplicationUser, IdentityRole>()
-        .AddEntityFrameworkStores<AppDbContext>()
-        .AddDefaultTokenProviders();
 }
 
-// 3) Repositórios
-//builder.Services.AddScoped<IOrdemServicoRepository, OrdemServicoRepository>();
-builder.Services.AddScoped<IPagamentoRepository, PagamentoRepository>();
-builder.Services.AddScoped<IStatusHistoricoRepository, StatusHistoricoRepository>();
-builder.Services.AddScoped<IOrcamentoItemRepository, OrcamentoItemRepository>();
-//builder.Services.AddScoped<IOrdemServicoAcessorioRepository, OrdemServicoAcessorioRepository>();
-//builder.Services.AddScoped<IOrdemServicoFotoRepository, OrdemServicoFotoRepository>();
-//builder.Services.AddScoped<IOrdemServicoComissaoRepository, OrdemServicoComissaoRepository>();
-builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
-builder.Services.AddScoped<ITecnicoRepository, TecnicoRepository>();
-builder.Services.AddScoped<IEmpresaRepository, EmpresaRepository>();
-builder.Services.AddScoped<IUnidadeRepository, UnidadeRepository>();
-builder.Services.AddScoped<IUsuarioAcessoRepository, UsuarioAcessoRepository>();
-
-// 3.1) Services de aplicação
-builder.Services.AddScoped<ITecnicoService, TecnicoService>();
-builder.Services.AddScoped<IEmpresaService, EmpresaService>();
-builder.Services.AddScoped<IUnidadeService, UnidadeService>();
-builder.Services.AddScoped<IUsuarioAcessoService, UsuarioAcessoService>();
-
-// 3.2) UnitOfWork
-builder.Services.AddScoped<IUnitOfWork, EfUnitOfWork>();
-
-builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
-
-// AutoMapper - Carrega todos os profiles do assembly
-builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-
-/// 4) Configurações de JWT (suas opções)
-builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
-var jwtSection = builder.Configuration.GetSection("Jwt");
-var jwtOptions = jwtSection.Get<JwtOptions>() ?? new JwtOptions();
-
-// Auth JWT (validação do token nos endpoints)
-var keyBytes = Encoding.UTF8.GetBytes(jwtOptions.SigningKey);
-
+// Identity
 builder.Services
-    .AddAuthentication(options =>
+    .AddIdentity<ApplicationUser, IdentityRole>(options =>
     {
-        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.Password.RequireDigit = true;
+        options.Password.RequiredLength = 8;
+        options.Password.RequireNonAlphanumeric = false;
+        options.Password.RequireUppercase = true;
+        options.Password.RequireLowercase = true;
+        options.User.RequireUniqueEmail = true;
     })
+    .AddEntityFrameworkStores<AppDbContext>()
+    .AddDefaultTokenProviders();
+
+// JWT Validation (Issuer/Audience aqui; signing keys via JWKS)
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.RequireHttpsMetadata = true;
-        options.SaveToken = true;
+        var jwt = builder.Configuration.GetSection("Jwt").Get<JwtOptions>() ?? new JwtOptions();
+
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
-            ValidIssuer = jwtOptions.Issuer,
             ValidateAudience = true,
-            ValidAudience = jwtOptions.Audience,
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(keyBytes),
             ValidateLifetime = true,
-            ClockSkew = TimeSpan.Zero
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwt.Issuer,
+            ValidAudience = jwt.Audience
+            // Signing keys serão resolvidas via UseJwtValidation() (JWKS)
         };
     });
 
-// Serviço de geração de tokens
-builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+builder.Services.AddAuthorization();
 
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// NetDevPack - JWKS + validação automática
+builder.Services
+    .AddJwksManager()
+    .PersistKeysToDatabaseStore<AppDbContext>()
+    .UseJwtValidation();
+
+// AutoMapper (sem AutoMapper.Extensions.Microsoft.DependencyInjection)
+builder.Services.AddSingleton<MapperConfiguration>(sp =>
+{
+    var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
+
+    var cfg = new MapperConfiguration(config =>
+    {
+        config.AddMaps(typeof(ClienteProfile).Assembly);
+    }, loggerFactory);
+
+    cfg.AssertConfigurationIsValid();
+    return cfg;
+});
+
+builder.Services.AddScoped<IMapper>(sp =>
+    sp.GetRequiredService<MapperConfiguration>().CreateMapper());
+
+// Repositories / UoW
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+// Services
+builder.Services.AddScoped<IUsuarioAcessoService, UsuarioAcessoService>();
+builder.Services.AddScoped<IRefreshTokenStore, RefreshTokenStore>();
+builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 
 var app = builder.Build();
 
+// Pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "OsLog.API v1");
-        c.RoutePrefix = "swagger";
-    });
-}
-
-// 5) (Opcional) aplicar migrations automaticamente na inicialização
-if (!app.Environment.IsEnvironment("Testing"))
-{
-    using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.Migrate();
-
-    OsLog.Api.Identity.IdentitySeed.SeedAsync(app.Services).GetAwaiter().GetResult();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
-app.UseOsLogExceptionHandling();
 
-app.UseAuthentication(); // 👈 OBRIGATÓRIO antes do UseAuthorization
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
+// Seed (roles/usuário master)
+await IdentitySeed.SeedAsync(app.Services);
+
 app.Run();
-
-
-// Necessário para WebApplicationFactory<Program>
-public partial class Program { }

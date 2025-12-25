@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace OsLog.Mapping.Tests.Mapping;
 
@@ -15,7 +16,7 @@ public class Mapping_AutoMapperConfigurationTests
                 && a.FullName.StartsWith("OsLog."));
 
             cfg.AddMaps(appAssemblies);
-        });
+        }, NullLoggerFactory.Instance);
     }
 
     [Fact(DisplayName = "[Mapping] Configuração global do AutoMapper deve ser válida")]
