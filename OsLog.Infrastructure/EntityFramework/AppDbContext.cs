@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using NetDevPack.Security.Jwt.Core.Model;
 using NetDevPack.Security.Jwt.Store.EntityFrameworkCore;
@@ -22,6 +23,16 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>, ISecurityKeyCont
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+
+        const string authSchema = "Auth";
+        builder.Entity<ApplicationUser>().ToTable("AspNetUsers", authSchema);
+        builder.Entity<IdentityRole>().ToTable("AspNetRoles", authSchema);
+        builder.Entity<IdentityUserRole<string>>().ToTable("AspNetUserRoles", authSchema);
+        builder.Entity<IdentityUserClaim<string>>().ToTable("AspNetUserClaims", authSchema);
+        builder.Entity<IdentityUserLogin<string>>().ToTable("AspNetUserLogins", authSchema);
+        builder.Entity<IdentityRoleClaim<string>>().ToTable("AspNetRoleClaims", authSchema);
+        builder.Entity<IdentityUserToken<string>>().ToTable("AspNetUserTokens", authSchema);
+
         builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
     }
 }

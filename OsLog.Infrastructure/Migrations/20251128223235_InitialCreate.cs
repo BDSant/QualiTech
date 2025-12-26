@@ -11,17 +11,12 @@ namespace OsLog.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.EnsureSchema(
-                name: "Clientes");
+            migrationBuilder.EnsureSchema(name: "Clientes");
+            migrationBuilder.EnsureSchema(name: "Empresa");
+            migrationBuilder.EnsureSchema(name: "OrdemServico");
+            migrationBuilder.EnsureSchema(name: "Auth");
 
-            migrationBuilder.EnsureSchema(
-                name: "Empresa");
-
-            migrationBuilder.EnsureSchema(
-                name: "OrdemServico");
-
-            migrationBuilder.CreateTable(
-                name: "Cliente",
+            migrationBuilder.CreateTable(name: "Cliente",
                 schema: "Clientes",
                 columns: table => new
                 {
@@ -191,6 +186,31 @@ namespace OsLog.Infrastructure.Migrations
                         principalColumn: "Id");
                 });
 
+            migrationBuilder.CreateTable(
+                name: "SecurityKeys",
+                schema: "Auth",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    KeyId = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Algorithm = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    Key = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Created = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SecurityKeys", x => x.Id);
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SecurityKeys_KeyId",
+                schema: "Auth",
+                table: "SecurityKeys",
+                column: "KeyId",
+                unique: true);
+
             migrationBuilder.CreateIndex(
                 name: "IX_Unidade_EmpresaId",
                 schema: "Empresa",
@@ -252,6 +272,10 @@ namespace OsLog.Infrastructure.Migrations
             migrationBuilder.DropTable(
                 name: "Empresa",
                 schema: "Empresa");
+            
+            migrationBuilder.DropTable(
+                name: "SecurityKeys",
+                schema: "Auth");
         }
     }
 }

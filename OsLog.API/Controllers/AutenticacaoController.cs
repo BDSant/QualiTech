@@ -38,7 +38,6 @@ public class AutenticacaoController : ControllerBase
 
         var roles = await _userManager.GetRolesAsync(user);
         var claims = await _userManager.GetClaimsAsync(user);
-
         var token = await _jwtTokenService.GenerateTokensAsync(
             user.Id,
             user.Email ?? request.Email,
@@ -73,6 +72,49 @@ public class AutenticacaoController : ControllerBase
             return BadRequest("RefreshToken é obrigatório.");
 
         await _jwtTokenService.LogoutAsync(request.RefreshToken, ct);
+        return NoContent();
+    }
+
+    [HttpPost("change-password")]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequestDto request, CancellationToken ct)
+    {
+        if (!ModelState.IsValid)
+            return ValidationProblem(ModelState);
+
+        var user = await _userManager.FindByEmailAsync(request.Email);
+        if (user is null)
+            return NotFound("Usuário não encontrado.");
+
+        var result = await _userManager.ChangePasswordAsync(user, request.SenhaAtual, request.NovaSenha);
+        if (!result.Succeeded)
+        {
+            var errors = result.Errors.Select(e => e.Description);
+            return BadRequest(new { errors });
+        }
+
+        return NoContent();
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequestDto request, CancellationToken ct)
+    {
+        if (!ModelState.IsValid)
+            return ValidationProblem(ModelState);
+
+        var user = await _userManager.FindByEmailAsync(request.Email);
+        if (user is null)
+            return NotFound("Usuário não encontrado.");
+
+        // Gera token de reset e usa para redefinir a senha sem conhecer a antiga
+        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+        var result = await _userManager.ResetPasswordAsync(user, token, request.NovaSenha);
+
+        if (!result.Succeeded)
+        {
+            var errors = result.Errors.Select(e => e.Description);
+            return BadRequest(new { errors });
+        }
+
         return NoContent();
     }
 }
