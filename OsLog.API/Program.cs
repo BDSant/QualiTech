@@ -17,49 +17,15 @@ using OsLog.Infrastructure.EntityFramework;
 using OsLog.Infrastructure.Identity;
 using OsLog.Infrastructure.Repositories;
 using OsLog.Infrastructure.UnitOfWork;
-using M = Microsoft.OpenApi;
 using System.Collections.Generic;
+using System;
+using M = Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Controllers / Swagger
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-
-//builder.Services.AddSwaggerGen(options =>
-//{
-//    options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
-//    {
-//        Title = "OsLog.API",
-//        Version = "v1"
-//    });
-
-//    options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-//    {
-//        Name = "Authorization",
-//        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
-//        Scheme = "bearer",
-//        BearerFormat = "JWT",
-//        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-//        Description = "Informe: Bearer {seu_token}"
-//    });
-
-//    options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
-//    {
-//        {
-//            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-//            {
-//                Reference = new Microsoft.OpenApi.Models.OpenApiReference
-//                {
-//                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
-//                    Id = "Bearer"
-//                }
-//            },
-//            Array.Empty<string>()
-//        }
-//    });
-//});
-
 
 builder.Services.AddSwaggerGen(options =>
 {
@@ -79,13 +45,12 @@ builder.Services.AddSwaggerGen(options =>
         Description = "Informe: Bearer {seu_token}"
     });
 
-    // Forma compatível com o modelo atual (sem scheme.Reference = ...)
+    // Uso do modelo compatível com Microsoft.OpenApi package
     options.AddSecurityRequirement(document => new M.OpenApiSecurityRequirement
     {
-        [new M.OpenApiSecuritySchemeReference("Bearer", document)] = []
+        [new M.OpenApiSecuritySchemeReference("Bearer", document)] = new List<string>()
     });
 });
-
 
 // Options
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
@@ -139,6 +104,9 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
+// Memory cache requerido por NetDevPack (JWKS stores)
+builder.Services.AddMemoryCache();
+
 // NetDevPack - JWKS + validação automática
 builder.Services
     .AddJwksManager()
@@ -164,12 +132,30 @@ builder.Services.AddScoped<IMapper>(sp =>
 
 // Repositories / UoW
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+
+// Registre os repositórios concretos referenciados por UnitOfWork
+builder.Services.AddScoped<IOrcamentoItemRepository, OrcamentoItemRepository>();
+builder.Services.AddScoped<IPagamentoRepository, PagamentoRepository>();
+builder.Services.AddScoped<IStatusHistoricoRepository, StatusHistoricoRepository>();
+builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
+builder.Services.AddScoped<ITecnicoRepository, TecnicoRepository>();
+builder.Services.AddScoped<IEmpresaRepository, EmpresaRepository>();
+builder.Services.AddScoped<IUnidadeRepository, UnidadeRepository>();
+builder.Services.AddScoped<IUsuarioAcessoRepository, UsuarioAcessoRepository>();
+
+// UnitOfWork deve vir depois para que todas as dependências já estejam registradas
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // Services
 builder.Services.AddScoped<IUsuarioAcessoService, UsuarioAcessoService>();
 builder.Services.AddScoped<IRefreshTokenStore, RefreshTokenStore>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+
+// Application services
+builder.Services.AddScoped<IEmpresaService, EmpresaService>();
+builder.Services.AddScoped<IClienteService, ClienteService>();
+builder.Services.AddScoped<ITecnicoService, TecnicoService>();
+builder.Services.AddScoped<IUnidadeService, UnidadeService>();
 
 var app = builder.Build();
 

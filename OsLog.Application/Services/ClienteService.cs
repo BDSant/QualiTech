@@ -1,11 +1,12 @@
 ﻿using AutoMapper;
 using OsLog.Application.Common;
 using OsLog.Application.DTOs.Clientes;
+using OsLog.Application.Interfaces.Services;
 using OsLog.Domain.Entities;
 
 namespace OsLog.Application.Services;
 
-public class ClienteService
+public class ClienteService : IClienteService
 {
     private readonly IUnitOfWork _uow;
     private readonly IMapper _mapper;
@@ -29,13 +30,7 @@ public class ClienteService
         return cliente.Id;
     }
 
-    public async Task<ClienteDto?> GetByIdAsync(int id, CancellationToken ct)
-    {
-        var cliente = await _uow.Clientes.GetByIdAsync(id, ct);
-        return cliente == null ? null : _mapper.Map<ClienteDto>(cliente);
-    }
-
-    public async Task<List<ClienteDto>> ListAsync(CancellationToken ct)
+    public async Task<IReadOnlyList<ClienteDto>> ListarAsync(CancellationToken ct)
     {
         var list = await _uow.Clientes.ListAsync(ct);
         return list.Where(c => !c.FlExcluido)
@@ -43,20 +38,10 @@ public class ClienteService
                    .ToList();
     }
 
-    public async Task UpdateAsync(int id, ClienteCreateDto dto, int usuarioId, CancellationToken ct)
+    public async Task<ClienteDto?> GetByIdAsync(int id, CancellationToken ct)
     {
-        var cliente = await _uow.Clientes.GetByIdAsync(id, ct)
-                      ?? throw new InvalidOperationException("Cliente não encontrado.");
-
-        cliente.Nome = dto.Nome;
-        cliente.Documento = dto.Documento;
-        cliente.Telefone = dto.Telefone;
-        cliente.Email = dto.Email;
-        cliente.DataAlteracao = DateTime.UtcNow;
-        cliente.AlteradoPor = usuarioId;
-
-        _uow.Clientes.Update(cliente);
-        await _uow.CommitAsync(ct);
+        var cliente = await _uow.Clientes.GetByIdAsync(id, ct);
+        return cliente == null ? null : _mapper.Map<ClienteDto>(cliente);
     }
 
     public async Task SoftDeleteAsync(int id, int usuarioId, CancellationToken ct)
