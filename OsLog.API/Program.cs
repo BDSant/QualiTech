@@ -3,22 +3,26 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi;
-using OsLog.Api.Configuration;
 using OsLog.Api.Identity;
-using OsLog.Api.Services.Auth;
-using OsLog.API.Services.Auth;
+using OsLog.Application.Abstractions.Identity;
+using OsLog.Application.Abstractions.Security;
 using OsLog.Application.Common;
+using OsLog.Application.Common.Security.Jwt;
 using OsLog.Application.Interfaces.Repositories;
 using OsLog.Application.Interfaces.Services;
 using OsLog.Application.Mapping;
 using OsLog.Application.Services;
+using OsLog.Application.UseCases.Autenticacao.ChangePassword;
+using OsLog.Application.UseCases.Autenticacao.Login;
+using OsLog.Application.UseCases.Autenticacao.Logout;
+using OsLog.Application.UseCases.Autenticacao.RefreshToken;
+using OsLog.Application.UseCases.Autenticacao.ResetPassword;
 using OsLog.Infrastructure.EntityFramework;
 using OsLog.Infrastructure.Identity;
+using OsLog.Infrastructure.Identity.Gateway;
 using OsLog.Infrastructure.Repositories;
+using OsLog.Infrastructure.Security.Jwt;
 using OsLog.Infrastructure.UnitOfWork;
-using System.Collections.Generic;
-using System;
 using M = Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -150,6 +154,14 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IUsuarioAcessoService, UsuarioAcessoService>();
 builder.Services.AddScoped<IRefreshTokenStore, RefreshTokenStore>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+builder.Services.AddScoped<IIdentityGateway, IdentityGateway>();
+
+// Auth UseCases
+builder.Services.AddScoped<ILoginUseCase, LoginUseCase>();
+builder.Services.AddScoped<IRefreshTokenUseCase, RefreshTokenUseCase>();
+builder.Services.AddScoped<ILogoutUseCase, LogoutUseCase>();
+builder.Services.AddScoped<IChangePasswordUseCase, ChangePasswordUseCase>();
+builder.Services.AddScoped<IResetPasswordUseCase, ResetPasswordUseCase>();
 
 // Application services
 builder.Services.AddScoped<IEmpresaService, EmpresaService>();

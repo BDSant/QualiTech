@@ -1,120 +1,69 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using OsLog.Api.DTOs.Auth;
-using OsLog.API.Services.Auth;
 using OsLog.Application.DTOs.Auth;
-using OsLog.Infrastructure.Identity;
+using OsLog.Application.UseCases.Autenticacao.ChangePassword;
+using OsLog.Application.UseCases.Autenticacao.Login;
+using OsLog.Application.UseCases.Autenticacao.Logout;
+using OsLog.Application.UseCases.Autenticacao.RefreshToken;
+using OsLog.Application.UseCases.Autenticacao.ResetPassword;
 
 namespace OsLog.Api.Controllers;
 
-[ApiController]
 [Route("api/[controller]")]
-public class AutenticacaoController : ControllerBase
+public class AutenticacaoController : BaseApiController
 {
-    private readonly SignInManager<ApplicationUser> _signInManager;
-    private readonly UserManager<ApplicationUser> _userManager;
-    private readonly IJwtTokenService _jwtTokenService;
+    private readonly ILoginUseCase _login;
+    private readonly IRefreshTokenUseCase _refresh;
+    private readonly ILogoutUseCase _logout;
+    private readonly IChangePasswordUseCase _changePassword;
+    private readonly IResetPasswordUseCase _resetPassword;
 
     public AutenticacaoController(
-        SignInManager<ApplicationUser> signInManager,
-        UserManager<ApplicationUser> userManager,
-        IJwtTokenService jwtTokenService)
+        ILoginUseCase login,
+        IRefreshTokenUseCase refresh,
+        ILogoutUseCase logout,
+        IChangePasswordUseCase changePassword,
+        IResetPasswordUseCase resetPassword)
     {
-        _signInManager = signInManager;
-        _userManager = userManager;
-        _jwtTokenService = jwtTokenService;
+        _login = login;
+        _refresh = refresh;
+        _logout = logout;
+        _changePassword = changePassword;
+        _resetPassword = resetPassword;
     }
 
-    [HttpPost("login")]
-    public async Task<ActionResult<TokenResponseDto>> Login([FromBody] LoginRequestDto request, CancellationToken ct)
+    [HttpPost("login"), AllowAnonymous]
+    public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken ct)
     {
-        var user = await _userManager.FindByEmailAsync(request.Email);
-        if (user is null)
-            return Unauthorized("Credenciais inválidas.");
-
-        var result = await _signInManager.CheckPasswordSignInAsync(user, request.Senha, lockoutOnFailure: true);
-        if (!result.Succeeded)
-            return Unauthorized("Credenciais inválidas.");
-
-        var roles = await _userManager.GetRolesAsync(user);
-        var claims = await _userManager.GetClaimsAsync(user);
-        var token = await _jwtTokenService.GenerateTokensAsync(
-            user.Id,
-            user.Email ?? request.Email,
-            roles,
-            claims,
-            ct);
-
-        return Ok(token);
+        var result = await _login.ExecuteAsync(request, ct);
+        return CustomResponse(result, successStatus: 200);
     }
 
     [HttpPost("refresh")]
-    public async Task<ActionResult<TokenResponseDto>> Refresh([FromBody] RefreshRequestDto request, CancellationToken ct)
+    public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(request.RefreshToken))
-            return BadRequest("RefreshToken é obrigatório.");
-
-        try
-        {
-            var token = await _jwtTokenService.RefreshAsync(request.RefreshToken, ct);
-            return Ok(token);
-        }
-        catch
-        {
-            return Unauthorized("Refresh token inválido ou expirado.");
-        }
+        var result = await _refresh.ExecuteAsync(request, ct);
+        return CustomResponse(result, successStatus: 200);
     }
 
     [HttpPost("logout")]
-    public async Task<IActionResult> Logout([FromBody] RefreshRequestDto request, CancellationToken ct)
+    public async Task<IActionResult> Logout([FromBody] LogoutRequest request, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(request.RefreshToken))
-            return BadRequest("RefreshToken é obrigatório.");
-
-        await _jwtTokenService.LogoutAsync(request.RefreshToken, ct);
-        return NoContent();
+        var result = await _logout.ExecuteAsync(request, ct);
+        return CustomResponse(result, successStatus: 204);
     }
 
     [HttpPost("change-password")]
-    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequestDto request, CancellationToken ct)
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request, CancellationToken ct)
     {
-        if (!ModelState.IsValid)
-            return ValidationProblem(ModelState);
-
-        var user = await _userManager.FindByEmailAsync(request.Email);
-        if (user is null)
-            return NotFound("Usuário não encontrado.");
-
-        var result = await _userManager.ChangePasswordAsync(user, request.SenhaAtual, request.NovaSenha);
-        if (!result.Succeeded)
-        {
-            var errors = result.Errors.Select(e => e.Description);
-            return BadRequest(new { errors });
-        }
-
-        return NoContent();
+        var result = await _changePassword.ExecuteAsync(request, ct);
+        return CustomResponse(result, successStatus: 204);
     }
 
     [HttpPost("reset-password")]
-    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequestDto request, CancellationToken ct)
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request, CancellationToken ct)
     {
-        if (!ModelState.IsValid)
-            return ValidationProblem(ModelState);
-
-        var user = await _userManager.FindByEmailAsync(request.Email);
-        if (user is null)
-            return NotFound("Usuário não encontrado.");
-
-        // Gera token de reset e usa para redefinir a senha sem conhecer a antiga
-        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-        var result = await _userManager.ResetPasswordAsync(user, token, request.NovaSenha);
-
-        if (!result.Succeeded)
-        {
-            var errors = result.Errors.Select(e => e.Description);
-            return BadRequest(new { errors });
-        }
-
-        return NoContent();
+        var result = await _resetPassword.ExecuteAsync(request, ct);
+        return CustomResponse(result, successStatus: 204);
     }
 }

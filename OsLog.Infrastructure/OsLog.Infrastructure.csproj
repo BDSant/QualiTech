@@ -25,6 +25,9 @@
     <!-- NetDevPack JWKS Store -->
     <PackageReference Include="NetDevPack.Security.Jwt.Core" Version="8.2.2" />
     <PackageReference Include="NetDevPack.Security.Jwt.Store.EntityFrameworkCore" Version="8.2.2" />
+
+    <!-- JWT primitives usados na emissão (JsonWebTokenHandler, SecurityTokenDescriptor, etc.) -->
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.15.0" />
   </ItemGroup>
 
   <ItemGroup>

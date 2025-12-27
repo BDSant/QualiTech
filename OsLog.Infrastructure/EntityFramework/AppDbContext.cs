@@ -32,6 +32,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>, ISecurityKeyCont
         builder.Entity<IdentityUserLogin<string>>().ToTable("AspNetUserLogins", authSchema);
         builder.Entity<IdentityRoleClaim<string>>().ToTable("AspNetRoleClaims", authSchema);
         builder.Entity<IdentityUserToken<string>>().ToTable("AspNetUserTokens", authSchema);
+        builder.Entity<KeyMaterial>().ToTable("SecurityKeys", authSchema);
 
         builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
     }
