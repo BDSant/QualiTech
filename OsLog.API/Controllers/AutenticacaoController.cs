@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using OsLog.Application.DTOs.Auth;
 using OsLog.Application.UseCases.Autenticacao.ChangePassword;
 using OsLog.Application.UseCases.Autenticacao.Login;
 using OsLog.Application.UseCases.Autenticacao.Logout;

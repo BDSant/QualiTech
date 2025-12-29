@@ -3,6 +3,7 @@ using OsLog.Application.Abstractions.Security;
 using OsLog.Application.Common.Result;
 using OsLog.Application.Common.Security.ErrorCodes;
 using OsLog.Application.DTOs.Auth;
+using System;
 
 namespace OsLog.Application.UseCases.Autenticacao.Login;
 
@@ -29,9 +30,26 @@ public sealed class LoginUseCase : ILoginUseCase
         if (user is null)
             return Result<TokenResponseDto>.Fail(new AppError(AuthErrorCodes.InvalidCredentials, "Usuário ou senha inválidos.", ErrorType.Unauthorized));
 
+        // TODO: Implementar AD
+        // if (!user.IsActiveDirectory)
+
+
         var ok = await _identity.CheckPasswordAsync(user.Id, request.Senha, ct);
         if (!ok)
             return Result<TokenResponseDto>.Fail(new AppError(AuthErrorCodes.InvalidCredentials, "Usuário ou senha inválidos.", ErrorType.Unauthorized));
+
+        // TODO: Verificar se o usuário está ativo, bloqueado, etc. e Active Directory authentication
+        // Exemplo:
+        // if (!user.IsActive)
+        //     return Result<TokenResponseDto>.Fail(new AppError(AuthErrorCodes.UserInactive,
+        //         "Usuário está inativo.", ErrorType.Forbidden));
+
+        // if (!user.IsLockedOut)
+        //     return Result<TokenResponseDto>.Fail(new AppError(AuthErrorCodes.UserInactive,
+        //         "Usuário bloqueado temporariamente por tentativas inválidas.", ErrorType.Forbidden));
+
+        
+
 
         var roles = await _identity.GetRolesAsync(user.Id, ct);
         var claims = await _identity.GetClaimsAsync(user.Id, ct);

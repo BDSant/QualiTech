@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using NetDevPack.Security.Jwt.Core.Model;
 using OsLog.Api.Identity;
 using OsLog.Application.Abstractions.Identity;
 using OsLog.Application.Abstractions.Security;
@@ -70,7 +71,11 @@ if (builder.Environment.IsEnvironment("Testing"))
 else
 {
     builder.Services.AddDbContext<AppDbContext>(options =>
-        options.UseSqlServer(connectionString));
+    {
+        options.UseSqlServer(connectionString);
+        options.EnableDetailedErrors();
+        options.EnableSensitiveDataLogging();
+    });
 }
 
 // Identity

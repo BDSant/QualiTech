@@ -7,4 +7,7 @@ namespace OsLog.Application.Abstractions.Identity;
 public sealed record IdentityUserDto(
     string Id,
     string Email
+    //bool IsActive,
+    //bool IsLockedOut,
+    //bool IsActiveDirectory
 );

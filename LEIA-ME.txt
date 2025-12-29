@@ -7,7 +7,7 @@ Update-Database -Project OsLog.Infrastructure -StartupProject OsLog.Api
 
 
 
-Apara Todas tabelas
+Apaga Todas tabelas
 dotnet tool run dotnet-ef -- database drop --force --project OsLog.Infrastructure --startup-project OsLog.API
 
 Cria as tabelas a partir da Inicial

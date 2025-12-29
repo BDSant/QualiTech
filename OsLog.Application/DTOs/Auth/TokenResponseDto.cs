@@ -9,6 +9,5 @@ public class TokenResponseDto
     public DateTime RefreshExpiresAtUtc { get; set; }
 
     public string TokenType { get; set; } = "Bearer";
-    public int ExpiresIn { get; set; }          // em segundos
-    public DateTime ExpiresAt { get; set; }     // UTC
+    public int ExpiresInSeg { get; set; }
 }
