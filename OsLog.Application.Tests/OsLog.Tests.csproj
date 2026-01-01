@@ -36,5 +36,12 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Integration\Persistence\Services\" />
+    <Folder Include="Unit\Moq\Application\Services\" />
+    <Folder Include="Shared\Assertions\" />
+    <Folder Include="Shared\Builders\" />
+  </ItemGroup>
+
 </Project>
 

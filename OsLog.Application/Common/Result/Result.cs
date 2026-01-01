@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace OsLog.Application.Common.Result;
+﻿namespace OsLog.Application.Common.Result;
 
 public class Result
 {
@@ -16,6 +12,7 @@ public class Result
     }
 
     public static Result Ok() => new(true);
+    
     public static Result Fail(params AppError[] errors) => new(false, errors.ToList());
 
     public int GetHttpStatusOrDefault(int successStatus = 200)
@@ -33,6 +30,7 @@ public sealed class Result<T> : Result
     }
 
     public static Result<T> Ok(T value) => new(true, value);
-    public static Result<T> Fail(params AppError[] errors) => new(false, default, errors.ToList());
+
+    public new static Result<T> Fail(params AppError[] errors) => new(false, default, errors.ToList());
 }
 
