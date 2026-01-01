@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using OsLog.Application.Common.Result;
 
-namespace OsLog.Api.Controllers;
+namespace OsLog.API.Controllers;
 
 [ApiController]
 public abstract class BaseApiController : ControllerBase

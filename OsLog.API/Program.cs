@@ -2,13 +2,12 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using NetDevPack.Security.Jwt.Core.Model;
-using OsLog.Api.Identity;
+using OsLog.API.Identity;
 using OsLog.Application.Abstractions.Identity;
 using OsLog.Application.Abstractions.Security;
 using OsLog.Application.Common;
 using OsLog.Application.Common.Security.Jwt;
+using OsLog.Application.Interfaces;
 using OsLog.Application.Interfaces.Repositories;
 using OsLog.Application.Interfaces.Services;
 using OsLog.Application.Mapping;
@@ -18,9 +17,11 @@ using OsLog.Application.UseCases.Autenticacao.Login;
 using OsLog.Application.UseCases.Autenticacao.Logout;
 using OsLog.Application.UseCases.Autenticacao.RefreshToken;
 using OsLog.Application.UseCases.Autenticacao.ResetPassword;
+using OsLog.Application.UseCases.Users;
 using OsLog.Infrastructure.EntityFramework;
 using OsLog.Infrastructure.Identity;
 using OsLog.Infrastructure.Identity.Gateway;
+using OsLog.Infrastructure.Identity.Gateways;
 using OsLog.Infrastructure.Repositories;
 using OsLog.Infrastructure.Security.Jwt;
 using OsLog.Infrastructure.UnitOfWork;
@@ -99,7 +100,7 @@ builder.Services
     {
         var jwt = builder.Configuration.GetSection("Jwt").Get<JwtOptions>() ?? new JwtOptions();
 
-        options.TokenValidationParameters = new TokenValidationParameters
+        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
         {
             ValidateIssuer = true,
             ValidateAudience = true,
@@ -173,6 +174,9 @@ builder.Services.AddScoped<IEmpresaService, EmpresaService>();
 builder.Services.AddScoped<IClienteService, ClienteService>();
 builder.Services.AddScoped<ITecnicoService, TecnicoService>();
 builder.Services.AddScoped<IUnidadeService, UnidadeService>();
+builder.Services.AddScoped<IIdentityAdminGateway, IdentityAdminGateway>();
+builder.Services.AddScoped<CreateUserUseCase>();
+builder.Services.AddScoped<GetUserByIdUseCase>();
 
 var app = builder.Build();
 

@@ -1,4 +1,4 @@
-﻿namespace OsLog.Api.Middlewares;
+﻿namespace OsLog.API.Middlewares;
 
 public static class GlobalExceptionMiddlewareExtensions
 {

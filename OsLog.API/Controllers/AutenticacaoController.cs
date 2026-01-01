@@ -6,7 +6,7 @@ using OsLog.Application.UseCases.Autenticacao.Logout;
 using OsLog.Application.UseCases.Autenticacao.RefreshToken;
 using OsLog.Application.UseCases.Autenticacao.ResetPassword;
 
-namespace OsLog.Api.Controllers;
+namespace OsLog.API.Controllers;
 
 [Route("api/[controller]")]
 public class AutenticacaoController : BaseApiController

@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using OsLog.Api.Extensions;
+using OsLog.API.Extensions;
 using OsLog.Application.Common.Responses;
 using OsLog.Application.DTOs.Empresa;
 using OsLog.Application.Interfaces.Services;
 
-namespace OsLog.Api.Controllers;
+namespace OsLog.API.Controllers;
 
 [ApiController]
 [Route("api/empresas")]

@@ -29,7 +29,7 @@
     <ProjectReference Include="..\OsLog.Domain\OsLog.Domain.csproj" />
     <ProjectReference Include="..\OsLog.Application\OsLog.Application.csproj" />
     <ProjectReference Include="..\OsLog.Infrastructure\OsLog.Infrastructure.csproj" />
-    <ProjectReference Include="..\OsLog.Api\OsLog.Api.csproj" />
+    <ProjectReference Include="..\OsLog.API\OsLog.API.csproj" />
   </ItemGroup>
 
   <ItemGroup>

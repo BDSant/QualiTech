@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using OsLog.Application.Common.Responses;
 
-namespace OsLog.Api.Extensions;
+namespace OsLog.API.Extensions;
 
 public static class ValidationProblemOsLogExtensions
 {

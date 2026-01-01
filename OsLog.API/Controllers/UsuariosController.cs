@@ -1,141 +1,85 @@
-﻿using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using OsLog.Api.DTOs.Auth;
-using OsLog.Infrastructure.Identity;
+using OsLog.Application.DTOs.Users;
+using OsLog.Application.UseCases.Users;
+
+namespace OsLog.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class UsuariosController : ControllerBase
+[Authorize(Roles = "Master")]
+public sealed class UsuariosController : ControllerBase
 {
-    private readonly UserManager<ApplicationUser> _userManager;
-    private readonly RoleManager<IdentityRole> _roleManager;
+    private readonly CreateUserUseCase _createUserUseCase;
+    private readonly GetUserByIdUseCase _getUserByIdUseCase;
 
     public UsuariosController(
-        UserManager<ApplicationUser> userManager,
-        RoleManager<IdentityRole> roleManager)
+        CreateUserUseCase createUserUseCase,
+        GetUserByIdUseCase getUserByIdUseCase)
     {
-        _userManager = userManager;
-        _roleManager = roleManager;
+        _createUserUseCase = createUserUseCase ?? throw new ArgumentNullException(nameof(createUserUseCase));
+        _getUserByIdUseCase = getUserByIdUseCase ?? throw new ArgumentNullException(nameof(getUserByIdUseCase));
     }
 
-    /// <summary>
-    /// Cria um usuário com as roles e claims informadas.
-    /// Exemplo de body:
-    /// {
-    ///   "email": "admin2@oslog.local",
-    ///   "senha": "Admin@123",
-    ///   "roles": [ "Admin", "GerenteFinanceiro" ],
-    ///   "claims": [
-    ///     { "tipo": "nome", "valor": "Admin 2" },
-    ///     { "tipo": "tipo_usuario", "valor": "interno" }
-    ///   ]
-    /// }
-    /// </summary>
-    [HttpPost("criar")]
-    [AllowAnonymous]
-    //[Authorize(Roles = "Master")] // Só Master pode criar usuários; remova se não quiser essa regra
-    public async Task<IActionResult> CriarUsuario([FromBody] CreateUserRequestDto dto, CancellationToken ct)
+    // GET api/usuarios/{id}
+    [HttpGet("{id}")]
+    [ProducesResponseType(typeof(UserDetailsResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetById([FromRoute] string id, CancellationToken cancellationToken)
     {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+        var result = await _getUserByIdUseCase.ExecuteAsync(id, cancellationToken);
 
-        // 1) Verifica se já existe usuário com esse e-mail
-        var existente = await _userManager.FindByEmailAsync(dto.Email);
-        if (existente != null)
+        if (result.Succeeded && result.Data is not null)
+            return Ok(result.Data);
+
+        if (result.IsNotFound)
+            return NotFound();
+
+        return BadRequest(new ProblemDetails
         {
-            return BadRequest(new
+            Title = "Falha ao consultar usuário",
+            Detail = "Não foi possível obter o usuário com o id informado.",
+            Status = StatusCodes.Status400BadRequest,
+            Extensions = { ["errors"] = result.Errors }
+        });
+    }
+
+    // POST api/usuarios
+    [HttpPost]
+    [ProducesResponseType(typeof(CreateUserResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> Create([FromBody] CreateUserRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _createUserUseCase.ExecuteAsync(request, cancellationToken);
+
+        if (result.Succeeded && result.Data is not null)
+        {
+            return CreatedAtAction(
+                actionName: nameof(GetById),
+                routeValues: new { id = result.Data.UserId },
+                value: result.Data);
+        }
+
+        if (result.ErrorCode == CreateUserErrorCode.Conflict)
+        {
+            return Conflict(new ProblemDetails
             {
-                mensagem = "Já existe um usuário com este e-mail.",
-                email = dto.Email
+                Title = "Conflito ao criar usuário",
+                Detail = "Já existe um usuário cadastrado com os dados informados.",
+                Status = StatusCodes.Status409Conflict,
+                Extensions = { ["errors"] = result.Errors, ["errorCode"] = result.ErrorCode.ToString() }
             });
         }
 
-        // 2) Cria o usuário
-        var user = new ApplicationUser
+        // Validation e IdentityError -> 400 (mínimo refactor)
+        return BadRequest(new ProblemDetails
         {
-            UserName = dto.Email,
-            Email = dto.Email,
-            EmailConfirmed = true
-        };
-
-        var createResult = await _userManager.CreateAsync(user, dto.Senha);
-        if (!createResult.Succeeded)
-        {
-            return BadRequest(new
-            {
-                mensagem = "Erro ao criar usuário.",
-                erros = createResult.Errors.Select(e => e.Description)
-            });
-        }
-
-        // 3) Garante que as roles existem e atribui ao usuário
-        if (dto.Roles is not null && dto.Roles.Count > 0)
-        {
-            foreach (var roleName in dto.Roles.Distinct(StringComparer.OrdinalIgnoreCase))
-            {
-                if (!await _roleManager.RoleExistsAsync(roleName))
-                {
-                    var roleResult = await _roleManager.CreateAsync(new IdentityRole(roleName));
-                    if (!roleResult.Succeeded)
-                    {
-                        return BadRequest(new
-                        {
-                            mensagem = $"Erro ao criar role '{roleName}'.",
-                            erros = roleResult.Errors.Select(e => e.Description)
-                        });
-                    }
-                }
-
-                var addToRoleResult = await _userManager.AddToRoleAsync(user, roleName);
-                if (!addToRoleResult.Succeeded)
-                {
-                    return BadRequest(new
-                    {
-                        mensagem = $"Erro ao atribuir role '{roleName}' ao usuário.",
-                        erros = addToRoleResult.Errors.Select(e => e.Description)
-                    });
-                }
-            }
-        }
-
-        // 4) Adiciona claims
-        if (dto.Claims is not null && dto.Claims.Count > 0)
-        {
-            var claims = dto.Claims
-                .Where(c => !string.IsNullOrWhiteSpace(c.Tipo))
-                .Select(c => new Claim(c.Tipo, c.Valor ?? string.Empty))
-                .ToList();
-
-            if (claims.Count > 0)
-            {
-                var addClaimsResult = await _userManager.AddClaimsAsync(user, claims);
-                if (!addClaimsResult.Succeeded)
-                {
-                    return BadRequest(new
-                    {
-                        mensagem = "Erro ao atribuir claims ao usuário.",
-                        erros = addClaimsResult.Errors.Select(e => e.Description)
-                    });
-                }
-            }
-        }
-
-        // 5) Retorna um resumo do usuário criado
-        var userRoles = await _userManager.GetRolesAsync(user);
-        var userClaims = await _userManager.GetClaimsAsync(user);
-
-        return Ok(new
-        {
-            mensagem = "Usuário criado com sucesso.",
-            usuario = new
-            {
-                user.Id,
-                user.Email,
-                Roles = userRoles,
-                Claims = userClaims.Select(c => new { c.Type, c.Value })
-            }
+            Title = "Falha ao criar usuário",
+            Detail = "Não foi possível criar o usuário com os dados informados.",
+            Status = StatusCodes.Status400BadRequest,
+            Extensions = { ["errors"] = result.Errors, ["errorCode"] = result.ErrorCode.ToString() }
         });
     }
 }

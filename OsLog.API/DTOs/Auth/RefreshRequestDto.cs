@@ -1,4 +1,4 @@
-﻿namespace OsLog.Api.DTOs.Auth;
+﻿namespace OsLog.API.DTOs.Auth;
 
 public class RefreshRequestDto
 {

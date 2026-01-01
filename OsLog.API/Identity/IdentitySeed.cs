@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using OsLog.Infrastructure.Identity;
 
-namespace OsLog.Api.Identity;
+namespace OsLog.API.Identity;
 
 public static class IdentitySeed
 {

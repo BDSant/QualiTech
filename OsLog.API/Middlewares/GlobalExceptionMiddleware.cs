@@ -2,7 +2,7 @@
 using System.Net;
 using System.Text.Json;
 
-namespace OsLog.Api.Middlewares;
+namespace OsLog.API.Middlewares;
 
 public class GlobalExceptionMiddleware
 {

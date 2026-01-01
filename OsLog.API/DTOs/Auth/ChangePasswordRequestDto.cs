@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace OsLog.Api.DTOs.Auth;
+namespace OsLog.API.DTOs.Auth;
 
 public class ChangePasswordRequestDto
 {

@@ -1,4 +1,4 @@
-Criar Migration do zero
+﻿Criar Migration do zero
 
 Add-Migration InitialCreate -Project OsLog.Infrastructure -StartupProject OsLog.Api -OutputDir EntityFramework\Migrations
 
@@ -12,3 +12,212 @@ dotnet tool run dotnet-ef -- database drop --force --project OsLog.Infrastructur
 
 Cria as tabelas a partir da Inicial
 dotnet tool run dotnet-ef -- database update --project OsLog.Infrastructure --startup-project OsLog.API
+
+
+
+
+
+backlog objetivo:
+
+Rate limiting por endpoint na API (começar por /api/usuarios e /auth/*)
+
+Throttle escalonado (429 → cooldown → block temporário) com storage (Redis recomendado para ambiente distribuído)
+
+Telemetria (metricas + logs estruturados + alertas)
+
+Edge/WAF rules (quando houver)
+
+
+
+
+
+
+
+
+
+backlog
+
+1) Criar contratos (interfaces) na Application
+1.1 Interface administrativa para Identity
+
+Criar arquivo:
+
+OsLog.Application/Interfaces/IIdentityAdminGateway.cs
+
+Responsabilidade:
+
+Definir operações administrativas (criar usuário, atribuir roles, atribuir claims, etc.) sem depender de UserManager, RoleManager ou tipos do ASP.NET Identity.
+
+Assinaturas típicas:
+
+CreateUserAsync(...)
+
+AddRolesAsync(userId, roles)
+
+AddClaimsAsync(userId, claims)
+
+GetUserByEmailAsync(email) (se necessário para evitar duplicidade)
+
+EnsureRoleExistsAsync(role) (opcional, mas útil)
+
+1.2 DTOs/Requests na Application (contratos de entrada/saída do caso de uso)
+
+Criar pasta (se ainda não existir):
+
+OsLog.Application/DTOs/Users/
+
+Criar arquivos:
+
+OsLog.Application/DTOs/Users/CreateUserRequest.cs
+
+OsLog.Application/DTOs/Users/CreateUserResponse.cs
+
+Se você já tem um padrão de Result<T> em:
+
+OsLog.Application/Common/Result/
+então o UseCase deve retornar Result<CreateUserResponse>.
+
+2) Criar UseCases na Application
+2.1 UseCase: criar usuário + roles + claims
+
+Criar pasta:
+
+OsLog.Application/UseCases/Users/
+
+Criar arquivo:
+
+OsLog.Application/UseCases/Users/CreateUserUseCase.cs
+
+Responsabilidade:
+
+Orquestrar o fluxo (validação, checagem de duplicidade, criação, atribuição de roles e claims).
+
+Retornar Result<T> padronizado.
+
+Dependências do UseCase (somente abstrações):
+
+IIdentityAdminGateway (novo)
+
+(Opcional) ILogger<CreateUserUseCase>
+
+(Opcional) algum serviço de validação/sanitização
+
+3) Implementar as interfaces na Infrastructure
+3.1 Implementação real usando ASP.NET Identity
+
+Criar pasta (sugestão):
+
+OsLog.Infrastructure/Identity/Gateways/
+
+Criar arquivo:
+
+OsLog.Infrastructure/Identity/Gateways/IdentityAdminGateway.cs
+
+Responsabilidade:
+
+Implementar IIdentityAdminGateway usando:
+
+UserManager<ApplicationUser>
+
+RoleManager<IdentityRole>
+
+Claim e demais tipos do Identity
+
+Importante: somente aqui a solution deve conhecer UserManager/RoleManager.
+
+4) Registrar DI corretamente
+
+Você precisa registrar a interface nova no container.
+
+4.1 Se você tem classe de DI na Infrastructure
+
+Procure um arquivo do tipo:
+
+OsLog.Infrastructure/DependencyInjection.cs
+ou alguma extensão:
+
+OsLog.Infrastructure/Extensions/ServiceCollectionExtensions.cs
+
+Adicionar:
+
+services.AddScoped<IIdentityAdminGateway, IdentityAdminGateway>();
+
+4.2 Se não houver centralização e tudo estiver no Program.cs
+
+Alterar arquivo:
+
+OsLog.API/Program.cs
+
+Adicionar o registro:
+
+builder.Services.AddScoped<IIdentityAdminGateway, IdentityAdminGateway>();
+
+5) Refatorar a API para não usar Identity diretamente
+5.1 Controller deve chamar UseCase, não UserManager/RoleManager
+
+Alterar arquivo:
+
+OsLog.API/Controllers/UsuariosController.cs
+
+Mudanças obrigatórias:
+
+Remover injeção de UserManager<ApplicationUser> e RoleManager<IdentityRole>
+
+Injetar CreateUserUseCase (ou uma interface ICreateUserUseCase, se você preferir padronizar)
+
+Controller deve:
+
+Receber request (idealmente o request da Application, ou mapear de um request da API para o request da Application)
+
+Chamar o UseCase
+
+Traduzir Result<T> para HTTP (200/201, 400, 409, etc.)
+
+6) Segurança: remover AllowAnonymous de endpoints administrativos
+6.1 Criar policy “MasterOnly” (ou equivalente)
+
+Alterar arquivo:
+
+OsLog.API/Program.cs
+
+Adicionar Authorization Policy, por exemplo:
+
+RequireRole("Master")
+ou
+
+RequireClaim("role", "Master") (depende do seu padrão de claims)
+
+6.2 Aplicar policy no controller
+
+Alterar arquivo:
+
+OsLog.API/Controllers/UsuariosController.cs
+
+Trocar:
+
+[AllowAnonymous]
+por:
+
+[Authorize(Policy = "MasterOnly")] (ou [Authorize(Roles="Master")])
+
+7) Critérios de “feito” da Fase 1 (checagem objetiva)
+
+Após a refatoração:
+
+Nenhum Controller deve referenciar diretamente:
+
+UserManager<>, RoleManager<>, IdentityRole, EF DbContext, repositórios infra.
+
+UsuariosController deve compilar com dependência apenas de:
+
+UseCases (Application) e DTOs.
+
+A Infrastructure deve ser a única camada contendo:
+
+Microsoft.AspNetCore.Identity.*
+
+UserManager/RoleManager
+
+Implementações concretas de gateways
+
+Endpoints administrativos devem estar protegidos por policy/role.

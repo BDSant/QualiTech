@@ -1,12 +1,12 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
-using OsLog.Api.Controllers;
+using OsLog.API.Controllers;
 using OsLog.Application.Common.Responses;
 using OsLog.Application.DTOs.Empresa;
 using OsLog.Application.Interfaces.Services;
 
-namespace OsLog.Tests.Moq.Api;
+namespace OsLog.Tests.Moq.API;
 
 public class EmpresaControllerMoqTests
 {
