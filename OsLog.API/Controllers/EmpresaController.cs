@@ -2,7 +2,7 @@
 using OsLog.API.Extensions;
 using OsLog.Application.Common.Responses;
 using OsLog.Application.DTOs.Empresa;
-using OsLog.Application.Interfaces.Services;
+using OsLog.Application.Ports.ApplicationServices;
 
 namespace OsLog.API.Controllers;
 

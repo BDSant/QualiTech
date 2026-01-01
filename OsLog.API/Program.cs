@@ -1,16 +1,18 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OsLog.API.Identity;
-using OsLog.Application.Abstractions.Identity;
-using OsLog.Application.Abstractions.Security;
 using OsLog.Application.Common;
+using OsLog.Application.Common.Responses;
 using OsLog.Application.Common.Security.Jwt;
-using OsLog.Application.Interfaces;
-using OsLog.Application.Interfaces.Repositories;
-using OsLog.Application.Interfaces.Services;
 using OsLog.Application.Mapping;
+using OsLog.Application.Ports.ApplicationServices;
+using OsLog.Application.Ports.Identity.Admin;
+using OsLog.Application.Ports.Identity.Runtime;
+using OsLog.Application.Ports.Persistence.Repositories;
+using OsLog.Application.Ports.Security;
 using OsLog.Application.Services;
 using OsLog.Application.UseCases.Autenticacao.ChangePassword;
 using OsLog.Application.UseCases.Autenticacao.Login;
@@ -21,7 +23,6 @@ using OsLog.Application.UseCases.Users;
 using OsLog.Infrastructure.EntityFramework;
 using OsLog.Infrastructure.Identity;
 using OsLog.Infrastructure.Identity.Gateway;
-using OsLog.Infrastructure.Identity.Gateways;
 using OsLog.Infrastructure.Repositories;
 using OsLog.Infrastructure.Security.Jwt;
 using OsLog.Infrastructure.UnitOfWork;
@@ -31,6 +32,36 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Controllers / Swagger
 builder.Services.AddControllers();
+
+// configura o comportamento do [ApiController] para, em caso de ModelState inválido, retornar OsLogResponse com CodigosOsLog.ERRO_VALIDACAO
+builder.Services
+    .AddControllers()
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            // Monte seus erros (ModelState)
+            var errors = context.ModelState
+                .Where(kvp => kvp.Value?.Errors.Count > 0)
+                .ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value!.Errors.Select(e => e.ErrorMessage).ToArray()
+                );
+
+            var payload = new OsLogResponse<object>
+            {
+                Sucesso = false,
+                Codigo = CodigosOsLog.ERRO_VALIDACAO,
+                Mensagem = "Dados inválidos.",
+                Dados = null,
+                Erros = errors
+            };
+
+            return new BadRequestObjectResult(payload);
+        };
+    });
+
+
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen(options =>

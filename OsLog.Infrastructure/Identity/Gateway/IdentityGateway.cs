@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Identity;
-using OsLog.Application.Abstractions.Identity;
 using OsLog.Application.Common.Result;
 using OsLog.Application.Common.Security.ErrorCodes;
+using OsLog.Application.Ports.Identity.Runtime;
 using System.Security.Claims;
 
 namespace OsLog.Infrastructure.Identity.Gateway;

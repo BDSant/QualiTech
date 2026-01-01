@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using OsLog.Application.Interfaces.Repositories;
+using OsLog.Application.Ports.Persistence.Repositories;
 using OsLog.Infrastructure.EntityFramework;
 using System.Linq.Expressions;
 

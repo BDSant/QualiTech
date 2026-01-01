@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using OsLog.Application.Interfaces.Services;
+using OsLog.Application.Ports.ApplicationServices;
 using OsLog.Infrastructure.EntityFramework;
 
 namespace OsLog.Infrastructure.Identity;

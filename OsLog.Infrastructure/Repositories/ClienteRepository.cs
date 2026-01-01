@@ -1,6 +1,6 @@
 using OsLog.Infrastructure.EntityFramework;
-using OsLog.Application.Interfaces.Repositories;
 using OsLog.Domain.Entities;
+using OsLog.Application.Ports.Persistence.Repositories;
 
 namespace OsLog.Infrastructure.Repositories;
 

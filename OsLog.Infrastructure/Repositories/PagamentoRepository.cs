@@ -1,4 +1,4 @@
-using OsLog.Application.Interfaces.Repositories;
+using OsLog.Application.Ports.Persistence.Repositories;
 using OsLog.Domain.Entities;
 using OsLog.Infrastructure.EntityFramework;
 

@@ -1,4 +1,9 @@
-﻿Criar Migration do zero
+﻿Application define as abstrações (ports)
+Infrastructure implementa (adapters)
+API apenas orquestra (controllers)
+
+
+Criar Migration do zero
 
 Add-Migration InitialCreate -Project OsLog.Infrastructure -StartupProject OsLog.Api -OutputDir EntityFramework\Migrations
 
@@ -36,6 +41,32 @@ Edge/WAF rules (quando houver)
 
 
 backlog
+
+
+1) Criar contratos (interfaces) na Application
+2) Criar UseCases na Application
+3) Implementar as interfaces na Infrastructure
+4) Registrar DI corretamente
+5) Refatorar a API para não usar Identity diretamente
+6) Segurança: remover AllowAnonymous de endpoints administrativos
+7) Critérios de “feito” da Fase 1 (checagem objetiva)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 1) Criar contratos (interfaces) na Application
 1.1 Interface administrativa para Identity
@@ -221,3 +252,157 @@ UserManager/RoleManager
 Implementações concretas de gateways
 
 Endpoints administrativos devem estar protegidos por policy/role.
+
+
+
+
+
+
+
+
+TESTE PEndentes
+
+1) UseCases de Usuários
+
+Criar: OsLog.Application.Tests/Moq/UseCases/Users/CreateUserUseCaseTests.cs
+
+Cenários mínimos:
+
+Request null → Validation
+
+Campos obrigatórios ausentes (UserName/Email/Password) → Validation
+
+Password != ConfirmPassword → Validation
+
+Gateway retorna usuário existente por e-mail → Conflict
+
+CreateUserAsync falha → IdentityError
+
+EnsureRoleExistsAsync falha → IdentityError
+
+AddUserToRolesAsync falha → IdentityError
+
+AddClaimsAsync falha → IdentityError
+
+Sucesso: retorna CreateUserResponse com roles/claims normalizados (trim/distinct)
+
+2) UseCases de Autenticação (Auth)
+
+Crie Moq para cada um (são simples e valem pela regra de negócio/erros):
+
+2.1 LoginUseCase
+Criar: .../Moq/UseCases/Auth/LoginUseCaseTests.cs
+Cenários:
+
+Email/Senha vazios → Result.Fail (Validation)
+
+AuthenticateAsync falha (credencial inválida) → Unauthorized
+
+Sucesso → chama GetRolesAsync, GetClaimsAsync e GenerateTokensAsync e retorna tokens
+
+2.2 RefreshTokenUseCase
+Criar: .../Moq/UseCases/Auth/RefreshTokenUseCaseTests.cs
+Cenários:
+
+RefreshToken vazio → Validation
+
+_jwt.RefreshAsync lança SecurityTokenException → Unauthorized
+
+Sucesso → retorna token
+
+2.3 LogoutUseCase
+Criar: .../Moq/UseCases/Auth/LogoutUseCaseTests.cs
+Cenários:
+
+RefreshToken vazio → Validation
+
+Sucesso → chama _jwt.LogoutAsync e retorna OK
+
+2.4 ChangePasswordUseCase
+Criar: .../Moq/UseCases/Auth/ChangePasswordUseCaseTests.cs
+Cenário:
+
+Verificar que delega corretamente para _identity.ChangePasswordAsync(...) e propaga Result
+
+2.5 ResetPasswordUseCase
+Criar: .../Moq/UseCases/Auth/ResetPasswordUseCaseTests.cs
+Cenário:
+
+Verificar delegação para _identity.ResetPasswordAsync(...)
+
+Observação: existe um AutenticacaoUseCase.cs “vazio” (classe interna sem lógica). Isso não merece testes; é melhor remover/limpar para não confundir.
+
+3) Services (Application/Services) que ainda não têm unit tests
+
+Hoje há cobertura para Empresa/Unidade. Faltam:
+
+ClienteService → ClienteServiceTests.cs
+
+TecnicoService → TecnicoServiceTests.cs
+
+UsuarioAcessoService → UsuarioAcessoServiceTests.cs
+
+PagamentoService → PagamentoServiceTests.cs
+
+Cenários típicos:
+
+“happy path” (lista/obter/criar) verificando:
+
+chamadas ao repositório via UoW
+
+CommitAsync quando há gravação/alteração
+
+mapping (IMapper) quando aplicável
+
+“not found” (onde você lança InvalidOperationException) confirmando a exceção
+
+soft delete (FlExcluido) e auditoria (DataAlteracao/AlteradoPor), quando existir
+
+Testes de Integração que necessitam ser criados
+1) AutenticacaoController (principal lacuna)
+
+Criar: OsLog.Application.Tests/Integration/Api/AutenticacaoControllerIntegrationTests.cs
+
+Cenários recomendados:
+
+POST /api/autenticacao/login
+
+sucesso com usuário seedado (Master)
+
+falha (senha errada) → status coerente (provavelmente 401)
+
+POST /api/autenticacao/refresh
+
+sucesso com refreshToken retornado do login
+
+refresh inválido → 401
+
+POST /api/autenticacao/logout
+
+logout com refreshToken → 204
+
+após logout, refresh do mesmo token → falha (401)
+
+POST /api/autenticacao/change-password → 204 (se você tiver fluxo estável para testar)
+
+POST /api/autenticacao/reset-password → 204 (idem)
+
+2) UsuariosController – ampliar integração para segurança e validação
+
+Você já testa Create/Get/409. Falta cobrir:
+
+sem token → 401
+
+token de usuário não Master → 403
+
+request inválido (faltando campos) → 400
+
+falha de Identity (ex.: senha fraca) → 400 com errorCode = IdentityError (determinístico)
+
+3) GlobalExceptionMiddleware (opcional, mas valioso)
+
+Hoje há GlobalExceptionMiddleware. Um teste de integração que provoque uma exceção não tratada (via endpoint de teste ou cenário controlado) e valide:
+
+status code esperado (500)
+
+payload padronizado

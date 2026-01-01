@@ -301,8 +301,8 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using OsLog.Application.Common;                 // IUnitOfWork
 using OsLog.Application.DTOs.Empresa;
-using OsLog.Application.Interfaces.Repositories;
 using OsLog.Application.Mapping;
+using OsLog.Application.Ports.Persistence.Repositories;
 using OsLog.Application.Services;
 using OsLog.Domain.Entities;
 using System.Linq.Expressions;

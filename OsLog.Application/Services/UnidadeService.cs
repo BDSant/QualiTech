@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using OsLog.Application.Common;
 using OsLog.Application.DTOs.Empresa;
-using OsLog.Application.Interfaces.Services;
+using OsLog.Application.Ports.ApplicationServices;
 using OsLog.Domain.Entities;
 
 namespace OsLog.Application.Services;

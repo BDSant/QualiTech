@@ -1,4 +1,4 @@
-using OsLog.Application.Interfaces.Repositories;
+using OsLog.Application.Ports.Persistence.Repositories;
 
 namespace OsLog.Application.Services;
 

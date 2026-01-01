@@ -3,12 +3,12 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using OsLog.Application.Common;
 using OsLog.Application.DTOs.Empresa;
-using OsLog.Application.Interfaces.Repositories;
 using OsLog.Application.Mapping;
-using OsLog.Application.Services;
 using OsLog.Domain.Entities;
 using OsLog.Infrastructure.EntityFramework;
 using OsLog.Infrastructure.Repositories;
+using OsLog.Application.Ports.Persistence.Repositories;
+using OsLog.Application.Services;
 
 namespace OsLog.Tests.Integration.Services
 {

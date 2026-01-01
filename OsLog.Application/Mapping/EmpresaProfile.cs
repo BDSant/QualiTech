@@ -24,7 +24,8 @@ public class EmpresaProfile : Profile
             .ForMember(d => d.DataCriacao, opt => opt.Ignore())
             .ForMember(d => d.DataAlteracao, opt => opt.Ignore())
             .ForMember(d => d.AlteradoPor, opt => opt.Ignore())
-            .ForMember(d => d.Unidades, opt => opt.Ignore());
+            .ForMember(d => d.Unidades, opt => opt.Ignore())
+            .ForMember(d => d.UsuariosAcesso, opt => opt.Ignore());
 
         // Unidade -> DTO
         CreateMap<Unidade, UnidadeDto>()
@@ -38,6 +39,7 @@ public class EmpresaProfile : Profile
             .ForMember(d => d.FlExcluido, opt => opt.Ignore())
             .ForMember(d => d.DataCriacao, opt => opt.Ignore())
             .ForMember(d => d.DataAlteracao, opt => opt.Ignore())
-            .ForMember(d => d.AlteradoPor, opt => opt.Ignore());
+            .ForMember(d => d.AlteradoPor, opt => opt.Ignore())
+            .ForMember(d => d.UsuariosAcesso, opt => opt.Ignore());
     }
 }

@@ -1,9 +1,8 @@
-﻿using System.Security.Claims;
-using Microsoft.AspNetCore.Identity;
-using OsLog.Application.Interfaces;
-using OsLog.Infrastructure.Identity;
+﻿using Microsoft.AspNetCore.Identity;
+using OsLog.Application.Ports.Identity.Admin;
+using System.Security.Claims;
 
-namespace OsLog.Infrastructure.Identity.Gateways;
+namespace OsLog.Infrastructure.Identity.Gateway;
 
 /// <summary>
 /// Implementação concreta do gateway administrativo de Identity.

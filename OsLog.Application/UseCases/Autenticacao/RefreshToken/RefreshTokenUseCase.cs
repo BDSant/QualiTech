@@ -1,8 +1,8 @@
 using Microsoft.IdentityModel.Tokens;
-using OsLog.Application.Abstractions.Security;
 using OsLog.Application.Common.Result;
 using OsLog.Application.Common.Security.ErrorCodes;
 using OsLog.Application.DTOs.Auth;
+using OsLog.Application.Ports.Security;
 
 namespace OsLog.Application.UseCases.Autenticacao.RefreshToken;
 

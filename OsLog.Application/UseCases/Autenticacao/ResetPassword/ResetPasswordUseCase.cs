@@ -1,5 +1,5 @@
-using OsLog.Application.Abstractions.Identity;
 using OsLog.Application.Common.Result;
+using OsLog.Application.Ports.Identity.Runtime;
 
 namespace OsLog.Application.UseCases.Autenticacao.ResetPassword;
 

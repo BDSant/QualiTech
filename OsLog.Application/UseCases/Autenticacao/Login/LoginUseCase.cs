@@ -1,8 +1,8 @@
-using OsLog.Application.Abstractions.Identity;
-using OsLog.Application.Abstractions.Security;
 using OsLog.Application.Common.Result;
 using OsLog.Application.Common.Security.ErrorCodes;
 using OsLog.Application.DTOs.Auth;
+using OsLog.Application.Ports.Identity.Runtime;
+using OsLog.Application.Ports.Security;
 using System;
 
 namespace OsLog.Application.UseCases.Autenticacao.Login;
