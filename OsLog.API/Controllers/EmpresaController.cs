@@ -45,6 +45,16 @@ public class EmpresaController : ControllerBase
     {
         var lista = await _empresaService.ListarAsync(ct);
 
+        if (lista.Count <= 0 || lista is null)
+        {
+            return NotFound(
+                OsLogResponse<EmpresaDetailDto>.Critica(
+                    codigo: CodigosOsLog.EMPRESA_NAO_ENCONTRADA,
+                    mensagem: CriticasOsLog.RetornaCritica(CodigosOsLog.EMPRESA_NAO_ENCONTRADA)
+                )
+            );
+        }
+
         return Ok(
             OsLogResponse<IEnumerable<EmpresaListDto>>.Ok(
                 dados: lista,
