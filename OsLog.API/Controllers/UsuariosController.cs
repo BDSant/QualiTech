@@ -7,7 +7,7 @@ namespace OsLog.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Master")]
+[Authorize(Roles = "Master,Admin")]
 public sealed class UsuariosController : ControllerBase
 {
     private readonly CreateUserUseCase _createUserUseCase;
