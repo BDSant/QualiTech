@@ -46,14 +46,14 @@ public class UnidadeServiceTests
             }
         };
 
-        _UnitOfWorkMoq.Setup(u => u.Unidades.ListAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Unidade, bool>>>(), It.IsAny<CancellationToken>()))
+        _UnitOfWorkMoq.Setup(u => u.Unidades.GetById(It.IsAny<System.Linq.Expressions.Expression<Func<Unidade, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(unidades);
 
         _mapperMock.Setup(m => m.Map<List<UnidadeDto>>(unidades))
             .Returns(dtos);
 
         // Act
-        var result = await _service.ListarPorEmpresaAsync(10, CancellationToken.None);
+        var result = await _service.GetById(10, CancellationToken.None);
 
         // Assert
         Assert.NotNull(result);
@@ -67,7 +67,7 @@ public class UnidadeServiceTests
     public async Task CriarUnidadeAsync_Deve_Lancar_Se_Empresa_Nao_Encontrada()
     {
         // Arrange
-        _UnitOfWorkMoq.Setup(u => u.Empresas.GetByIdAsync(10, It.IsAny<CancellationToken>()))
+        _UnitOfWorkMoq.Setup(u => u.Empresas.GetById(10, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Empresa?)null);
 
         var dto = new UnidadeCreateDto
@@ -77,7 +77,7 @@ public class UnidadeServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            _service.CriarUnidadeAsync(10, dto, usuarioId: 99, CancellationToken.None));
+            _service.Create(10, dto, usuarioId: 99, CancellationToken.None));
     }
 
     [Fact(DisplayName = "[Application] UnidadeService.CriarUnidadeAsync deve lançar se empresa estiver excluida")]
@@ -92,7 +92,7 @@ public class UnidadeServiceTests
             FlExcluido = true
         };
 
-        _UnitOfWorkMoq.Setup(u => u.Empresas.GetByIdAsync(10, It.IsAny<CancellationToken>()))
+        _UnitOfWorkMoq.Setup(u => u.Empresas.GetById(10, It.IsAny<CancellationToken>()))
             .ReturnsAsync(empresa);
 
         var dto = new UnidadeCreateDto
@@ -102,7 +102,7 @@ public class UnidadeServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            _service.CriarUnidadeAsync(10, dto, usuarioId: 99, CancellationToken.None));
+            _service.Create(10, dto, usuarioId: 99, CancellationToken.None));
     }
 
     [Fact(DisplayName = "[Application] UnidadeService.CriarUnidadeAsync deve criar unidade vinculada à empresa")]
@@ -117,7 +117,7 @@ public class UnidadeServiceTests
             FlExcluido = false
         };
 
-        _UnitOfWorkMoq.Setup(u => u.Empresas.GetByIdAsync(10, It.IsAny<CancellationToken>()))
+        _UnitOfWorkMoq.Setup(u => u.Empresas.GetById(10, It.IsAny<CancellationToken>()))
             .ReturnsAsync(empresa);
 
         Unidade? unidadeCapturada = null;
@@ -142,7 +142,7 @@ public class UnidadeServiceTests
         };
 
         // Act
-        var id = await _service.CriarUnidadeAsync(10, dto, usuarioId: 99, CancellationToken.None);
+        var id = await _service.Create(10, dto, usuarioId: 99, CancellationToken.None);
 
         // Assert
         Assert.Equal(123, id);
@@ -158,7 +158,7 @@ public class UnidadeServiceTests
     public async Task SoftDeleteAsync_Deve_Retornar_False_Quando_Nao_Encontrada()
     {
         // Arrange
-        _UnitOfWorkMoq.Setup(u => u.Unidades.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+        _UnitOfWorkMoq.Setup(u => u.Unidades.GetById(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Unidade?)null);
 
         // Act
@@ -181,7 +181,7 @@ public class UnidadeServiceTests
             FlExcluido = true
         };
 
-        _UnitOfWorkMoq.Setup(u => u.Unidades.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+        _UnitOfWorkMoq.Setup(u => u.Unidades.GetById(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(unidade);
 
         // Act
@@ -204,7 +204,7 @@ public class UnidadeServiceTests
             FlExcluido = false
         };
 
-        _UnitOfWorkMoq.Setup(u => u.Unidades.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+        _UnitOfWorkMoq.Setup(u => u.Unidades.GetById(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(unidade);
 
         _UnitOfWorkMoq.Setup(u => u.CommitAsync(It.IsAny<CancellationToken>()))

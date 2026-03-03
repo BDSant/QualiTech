@@ -17,7 +17,7 @@ public class EmpresaService : IEmpresaService
         _mapper = mapper;
     }
 
-    public async Task<int> CriarEmpresaAsync(EmpresaCreateDto dto, int usuarioId, CancellationToken ct)
+    public async Task<int> Create(EmpresaCreateDto dto, int usuarioId, CancellationToken ct)
     {
         var empresa = new Empresa
         {
@@ -48,24 +48,24 @@ public class EmpresaService : IEmpresaService
         return empresa.Id;
     }
 
-    public async Task<IReadOnlyList<EmpresaListDto>> ListarAsync(CancellationToken ct)
+    public async Task<IReadOnlyList<EmpresaListDto>> GetAll(CancellationToken ct)
     {
-        var empresas = await _UnitOfWork.Empresas.ListAsync(e => !e.FlExcluido, ct);
+        var empresas = await _UnitOfWork.Empresas.GetById(e => !e.FlExcluido, ct);
         return _mapper.Map<List<EmpresaListDto>>(empresas);
     }
 
-    public async Task<EmpresaDetailDto?> ObterPorIdAsync(int id, CancellationToken ct)
+    public async Task<EmpresaDetailDto?> GetById(int id, CancellationToken ct)
     {
-        var empresa = await _UnitOfWork.Empresas.GetByIdAsync(id, ct);
+        var empresa = await _UnitOfWork.Empresas.GetById(id, ct);
         if (empresa is null || empresa.FlExcluido)
             return null;
 
         return _mapper.Map<EmpresaDetailDto>(empresa);
     }
 
-    public async Task<bool> SoftDeleteAsync(int id, int usuarioId, CancellationToken ct)
+    public async Task<bool> Delete(int id, int usuarioId, CancellationToken ct)
     {
-        var empresa = await _UnitOfWork.Empresas.GetByIdAsync(id, ct);
+        var empresa = await _UnitOfWork.Empresas.GetById(id, ct);
         if (empresa is null || empresa.FlExcluido)
             return false;
 

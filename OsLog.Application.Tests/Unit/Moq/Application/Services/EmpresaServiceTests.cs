@@ -48,14 +48,14 @@ public class EmpresaServiceTests
             }
         };
 
-        _uowMock.Setup(u => u.Empresas.ListAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Empresa, bool>>>(), It.IsAny<CancellationToken>()))
+        _uowMock.Setup(u => u.Empresas.GetById(It.IsAny<System.Linq.Expressions.Expression<Func<Empresa, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(empresas);
 
         _mapperMock.Setup(m => m.Map<List<EmpresaListDto>>(empresas))
             .Returns(dtos);
 
         // Act
-        var result = await _service.ListarAsync(CancellationToken.None);
+        var result = await _service.GetAll(CancellationToken.None);
 
         // Assert
         Assert.NotNull(result);
@@ -69,11 +69,11 @@ public class EmpresaServiceTests
     public async Task ObterPorIdAsync_Deve_Retornar_Null_Quando_Nao_Encontrada()
     {
         // Arrange
-        _uowMock.Setup(u => u.Empresas.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+        _uowMock.Setup(u => u.Empresas.GetById(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Empresa?)null);
 
         // Act
-        var result = await _service.ObterPorIdAsync(1, CancellationToken.None);
+        var result = await _service.GetById(1, CancellationToken.None);
 
         // Assert
         Assert.Null(result);
@@ -93,11 +93,11 @@ public class EmpresaServiceTests
             FlExcluido = true
         };
 
-        _uowMock.Setup(u => u.Empresas.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+        _uowMock.Setup(u => u.Empresas.GetById(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(empresa);
 
         // Act
-        var result = await _service.ObterPorIdAsync(1, CancellationToken.None);
+        var result = await _service.GetById(1, CancellationToken.None);
 
         // Assert
         Assert.Null(result);
@@ -127,14 +127,14 @@ public class EmpresaServiceTests
             Ativa = true
         };
 
-        _uowMock.Setup(u => u.Empresas.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+        _uowMock.Setup(u => u.Empresas.GetById(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(empresa);
 
         _mapperMock.Setup(m => m.Map<EmpresaDetailDto>(empresa))
             .Returns(dto);
 
         // Act
-        var result = await _service.ObterPorIdAsync(1, CancellationToken.None);
+        var result = await _service.GetById(1, CancellationToken.None);
 
         // Assert
         Assert.NotNull(result);
@@ -178,7 +178,7 @@ public class EmpresaServiceTests
             .ReturnsAsync(1);
 
         // Act
-        var id = await _service.CriarEmpresaAsync(dto, usuarioId: 99, CancellationToken.None);
+        var id = await _service.Create(dto, usuarioId: 99, CancellationToken.None);
 
         // Assert
         Assert.Equal(10, id);
@@ -194,11 +194,11 @@ public class EmpresaServiceTests
     public async Task SoftDeleteAsync_Deve_Retornar_False_Quando_Nao_Encontrada()
     {
         // Arrange
-        _uowMock.Setup(u => u.Empresas.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+        _uowMock.Setup(u => u.Empresas.GetById(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Empresa?)null);
 
         // Act
-        var ok = await _service.SoftDeleteAsync(1, 99, CancellationToken.None);
+        var ok = await _service.Delete(1, 99, CancellationToken.None);
 
         // Assert
         Assert.False(ok);
@@ -217,11 +217,11 @@ public class EmpresaServiceTests
             FlExcluido = true
         };
 
-        _uowMock.Setup(u => u.Empresas.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+        _uowMock.Setup(u => u.Empresas.GetById(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(empresa);
 
         // Act
-        var ok = await _service.SoftDeleteAsync(1, 99, CancellationToken.None);
+        var ok = await _service.Delete(1, 99, CancellationToken.None);
 
         // Assert
         Assert.False(ok);
@@ -240,14 +240,14 @@ public class EmpresaServiceTests
             FlExcluido = false
         };
 
-        _uowMock.Setup(u => u.Empresas.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+        _uowMock.Setup(u => u.Empresas.GetById(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(empresa);
 
         _uowMock.Setup(u => u.CommitAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
 
         // Act
-        var ok = await _service.SoftDeleteAsync(1, 99, CancellationToken.None);
+        var ok = await _service.Delete(1, 99, CancellationToken.None);
 
         // Assert
         Assert.True(ok);

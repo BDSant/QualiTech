@@ -52,7 +52,7 @@ public class EmpresaControllerMoqTests
         };
 
         _empresaServiceMock
-            .Setup(s => s.ListarAsync(It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAll(It.IsAny<CancellationToken>()))
             .ReturnsAsync(empresas);
 
         // Act
@@ -71,7 +71,7 @@ public class EmpresaControllerMoqTests
         Assert.Equal(empresas[1].Id, dados[1].Id);
 
         _empresaServiceMock.Verify(
-            s => s.ListarAsync(It.IsAny<CancellationToken>()),
+            s => s.GetAll(It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -85,7 +85,7 @@ public class EmpresaControllerMoqTests
     {
         // Arrange
         _empresaServiceMock
-            .Setup(s => s.ObterPorIdAsync(1, It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetById(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync((EmpresaDetailDto?)null);
 
         // Act
@@ -100,7 +100,7 @@ public class EmpresaControllerMoqTests
         Assert.Null(response.Dados);
 
         _empresaServiceMock.Verify(
-            s => s.ObterPorIdAsync(1, It.IsAny<CancellationToken>()),
+            s => s.GetById(1, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -123,7 +123,7 @@ public class EmpresaControllerMoqTests
         };
 
         _empresaServiceMock
-            .Setup(s => s.ObterPorIdAsync(10, It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetById(10, It.IsAny<CancellationToken>()))
             .ReturnsAsync(dto);
 
         // Act
@@ -138,7 +138,7 @@ public class EmpresaControllerMoqTests
         Assert.Equal(10, response.Dados!.Id);
 
         _empresaServiceMock.Verify(
-            s => s.ObterPorIdAsync(10, It.IsAny<CancellationToken>()),
+            s => s.GetById(10, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -159,7 +159,7 @@ public class EmpresaControllerMoqTests
         };
 
         _empresaServiceMock
-            .Setup(s => s.CriarEmpresaAsync(dto, It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.Create(dto, It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(123);
 
         // Act
@@ -181,7 +181,7 @@ public class EmpresaControllerMoqTests
         Assert.Equal(123, (int)propId!.GetValue(payload)!);
 
         _empresaServiceMock.Verify(
-            s => s.CriarEmpresaAsync(dto, It.IsAny<int>(), It.IsAny<CancellationToken>()),
+            s => s.Create(dto, It.IsAny<int>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -195,7 +195,7 @@ public class EmpresaControllerMoqTests
     {
         // Arrange
         _empresaServiceMock
-            .Setup(s => s.SoftDeleteAsync(1, It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.Delete(1, It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
         // Act
@@ -210,7 +210,7 @@ public class EmpresaControllerMoqTests
         Assert.Null(response.Dados);
 
         _empresaServiceMock.Verify(
-            s => s.SoftDeleteAsync(1, It.IsAny<int>(), It.IsAny<CancellationToken>()),
+            s => s.Delete(1, It.IsAny<int>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -224,7 +224,7 @@ public class EmpresaControllerMoqTests
     {
         // Arrange
         _empresaServiceMock
-            .Setup(s => s.SoftDeleteAsync(1, It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.Delete(1, It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Act
@@ -235,7 +235,7 @@ public class EmpresaControllerMoqTests
         Assert.Equal(StatusCodes.Status204NoContent, noContent.StatusCode);
 
         _empresaServiceMock.Verify(
-            s => s.SoftDeleteAsync(1, It.IsAny<int>(), It.IsAny<CancellationToken>()),
+            s => s.Delete(1, It.IsAny<int>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -255,11 +255,11 @@ public class EmpresaControllerMoqTests
         };
 
         _unidadeServiceMock
-            .Setup(s => s.CriarUnidadeAsync(10, dto, It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.Create(10, dto, It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(555);
 
         // Act
-        var result = await _controller.CriarUnidade(10, dto, CancellationToken.None);
+        var result = await _controller.Create(10, dto, CancellationToken.None);
 
         // Assert
         var created = Assert.IsType<CreatedAtActionResult>(result);
@@ -280,7 +280,7 @@ public class EmpresaControllerMoqTests
         Assert.Equal(10, (int)propEmpresaId!.GetValue(payload)!);
 
         _unidadeServiceMock.Verify(
-            s => s.CriarUnidadeAsync(10, dto, It.IsAny<int>(), It.IsAny<CancellationToken>()),
+            s => s.Create(10, dto, It.IsAny<int>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -299,7 +299,7 @@ public class EmpresaControllerMoqTests
         };
 
         _unidadeServiceMock
-            .Setup(s => s.ListarPorEmpresaAsync(10, It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetById(10, It.IsAny<CancellationToken>()))
             .ReturnsAsync(unidades);
 
         // Act
@@ -317,7 +317,7 @@ public class EmpresaControllerMoqTests
         Assert.Equal(10, dados[0].EmpresaId);
 
         _unidadeServiceMock.Verify(
-            s => s.ListarPorEmpresaAsync(10, It.IsAny<CancellationToken>()),
+            s => s.GetById(10, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -336,7 +336,7 @@ public class EmpresaControllerMoqTests
         };
 
         _unidadeServiceMock
-            .Setup(s => s.ListarTodasAsync(It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAll(empresaId: null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(unidades);
 
         // Act
@@ -354,7 +354,7 @@ public class EmpresaControllerMoqTests
         Assert.Equal(1, dados[0].Id);
 
         _unidadeServiceMock.Verify(
-            s => s.ListarTodasAsync(It.IsAny<CancellationToken>()),
+            s => s.GetAll(empresaId: null, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 }

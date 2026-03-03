@@ -11,12 +11,10 @@ namespace OsLog.API.Controllers;
 public class EmpresaController : ControllerBase
 {
     private readonly IEmpresaService _empresaService;
-    private readonly IUnidadeService _unidadeService;
 
-    public EmpresaController(IEmpresaService empresaService, IUnidadeService unidadeService)
+    public EmpresaController(IEmpresaService empresaService)
     {
         _empresaService = empresaService;
-        _unidadeService = unidadeService;
     }
 
     [HttpPost]
@@ -27,25 +25,23 @@ public class EmpresaController : ControllerBase
             return this.ValidationProblemOsLog(ModelState);
 
         var usuarioId = 1; // TODO: pegar do usuário logado
-        var id = await _empresaService.CriarEmpresaAsync(dto, usuarioId, ct);
+        var id = await _empresaService.Create(dto, usuarioId, ct);
 
-        var payload = new { Id = id };
+        //var payload = new { Id = id };
 
-        return CreatedAtAction(
-            nameof(GetById),
-            new { id },
-            OsLogResponse<object>.Ok(
-                dados: payload,
-                mensagem: "Empresa criada com sucesso.")
+        return CreatedAtAction(nameof(GetById),
+                               new { id },
+                               OsLogResponse<object>.Ok(dados: id,
+                                                        mensagem: "Empresa criada com sucesso.")
         );
     }
 
     [HttpGet]
     public async Task<IActionResult> GetAll(CancellationToken ct)
     {
-        var lista = await _empresaService.ListarAsync(ct);
+        var lista = await _empresaService.GetAll(ct);
 
-        if (lista.Count <= 0 || lista is null)
+        if (lista.Count <= 0)
         {
             return NotFound(
                 OsLogResponse<EmpresaDetailDto>.Critica(
@@ -65,7 +61,7 @@ public class EmpresaController : ControllerBase
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetById(int id, CancellationToken ct)
     {
-        var empresa = await _empresaService.ObterPorIdAsync(id, ct);
+        var empresa = await _empresaService.GetById(id, ct);
 
         if (empresa is null)
         {
@@ -89,7 +85,7 @@ public class EmpresaController : ControllerBase
     {
         var usuarioId = 1; // TODO: pegar do usuário logado
 
-        var ok = await _empresaService.SoftDeleteAsync(id, usuarioId, ct);
+        var ok = await _empresaService.Delete(id, usuarioId, ct);
         if (!ok)
         {
             return NotFound(
@@ -102,54 +98,5 @@ public class EmpresaController : ControllerBase
 
         // Sem payload quando exclui com sucesso
         return NoContent();
-    }
-
-    [HttpPost("{empresaId:int}/unidades")]
-    public async Task<IActionResult> CriarUnidade(int empresaId, [FromBody] UnidadeCreateDto dto, CancellationToken ct)
-    {
-        if (!ModelState.IsValid)
-            return this.ValidationProblemOsLog(ModelState);
-
-        var usuarioId = 1; // TODO: pegar do usuário logado
-
-        var unidadeId = await _unidadeService.CriarUnidadeAsync(
-            empresaId,
-            dto,
-            usuarioId,
-            ct);
-
-        var payload = new { Id = unidadeId, EmpresaId = empresaId };
-
-        return CreatedAtAction(
-            nameof(ListarUnidades),
-            new { empresaId },
-            OsLogResponse<object>.Ok(
-                dados: payload,
-                mensagem: "Unidade criada com sucesso.")
-        );
-    }
-
-    [HttpGet("{empresaId:int}/unidades")]
-    public async Task<IActionResult> ListarUnidades(int empresaId, CancellationToken ct)
-    {
-        var unidades = await _unidadeService.ListarPorEmpresaAsync(empresaId, ct);
-
-        return Ok(
-            OsLogResponse<IEnumerable<UnidadeDto>>.Ok(
-                dados: unidades,
-                mensagem: "Unidades retornadas com sucesso.")
-        );
-    }
-
-    [HttpGet("~/api/unidades")]
-    public async Task<IActionResult> ListarTodasUnidades(CancellationToken ct)
-    {
-        var unidades = await _unidadeService.ListarTodasAsync(ct);
-
-        return Ok(
-            OsLogResponse<IEnumerable<UnidadeDto>>.Ok(
-                dados: unidades,
-                mensagem: "Unidades retornadas com sucesso.")
-        );
     }
 }

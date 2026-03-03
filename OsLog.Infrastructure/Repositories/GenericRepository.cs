@@ -16,13 +16,13 @@ public class GenericRepository<T> : IGenericRepository<T> where T : class
         _dbSet = context.Set<T>();
     }
 
-    public virtual async Task<T?> GetByIdAsync(int id, CancellationToken ct = default)
+    public virtual async Task<T?> GetById(int id, CancellationToken ct = default)
         => await _dbSet.FindAsync(new object?[] { id }, ct);
 
-    public virtual async Task<IReadOnlyList<T>> ListAsync(CancellationToken ct = default)
+    public virtual async Task<IReadOnlyList<T>> GetAll(CancellationToken ct = default)
         => await _dbSet.AsNoTracking().ToListAsync(ct);
 
-    public virtual async Task<IReadOnlyList<T>> ListAsync(
+    public virtual async Task<IReadOnlyList<T>> GetById(
         Expression<Func<T, bool>> predicate,
         CancellationToken ct = default)
         => await _dbSet.AsNoTracking().Where(predicate).ToListAsync(ct);
@@ -32,5 +32,5 @@ public class GenericRepository<T> : IGenericRepository<T> where T : class
 
     public virtual void Update(T entity) => _dbSet.Update(entity);
 
-    public virtual void Remove(T entity) => _dbSet.Remove(entity);
+    public virtual void Delete(T entity) => _dbSet.Remove(entity);
 }
