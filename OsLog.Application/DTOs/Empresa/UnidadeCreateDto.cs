@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace OsLog.Application.DTOs.Empresa;
+namespace OsLog.Application.DTOs.Unidade;
 
 public class UnidadeCreateDto
 {

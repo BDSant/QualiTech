@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using OsLog.Application.Common.Responses;
 using OsLog.Application.DTOs.Empresa;
+using OsLog.Application.DTOs.Unidade;
 using OsLog.Infrastructure.EntityFramework;
 using OsLog.Tests.Shared.Factories;
 using System.Net;

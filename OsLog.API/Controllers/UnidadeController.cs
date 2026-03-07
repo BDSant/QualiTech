@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using OsLog.API.Extensions;
 using OsLog.Application.Common.Responses;
-using OsLog.Application.DTOs.Empresa;
+using OsLog.Application.DTOs.Unidade;
 using OsLog.Application.Ports.ApplicationServices;
 
 namespace OsLog.API.Controllers;
@@ -47,7 +47,7 @@ public class UnidadeController : ControllerBase
         if (unidades.Count <= 0)
         {
             return NotFound(
-                OsLogResponse<EmpresaDetailDto>.Critica(
+                OsLogResponse<UnidadeCreateDto>.Critica(
                     codigo: CodigosOsLog.UNIDADE_NAO_ENCONTRADA,
                     mensagem: CriticasOsLog.RetornaCritica(CodigosOsLog.UNIDADE_NAO_ENCONTRADA)
                 )
@@ -69,7 +69,7 @@ public class UnidadeController : ControllerBase
         if (unidades.Count <= 0)
         {
             return NotFound(
-                OsLogResponse<EmpresaDetailDto>.Critica(
+                OsLogResponse<UnidadeCreateDto>.Critica(
                     codigo: CodigosOsLog.UNIDADE_NAO_ENCONTRADA,
                     mensagem: CriticasOsLog.RetornaCritica(CodigosOsLog.UNIDADE_NAO_ENCONTRADA)
                 )

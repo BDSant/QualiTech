@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using OsLog.Application.DTOs.Empresa;
+using OsLog.Application.DTOs.Unidade;
 using OsLog.Domain.Entities;
 
 namespace OsLog.Application.Mapping;

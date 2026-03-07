@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using OsLog.Application.Common;
-using OsLog.Application.DTOs.Empresa;
+using OsLog.Application.DTOs.Unidade;
 using OsLog.Application.Ports.ApplicationServices;
 using OsLog.Domain.Entities;
 
@@ -56,9 +56,12 @@ public class UnidadeService : IUnidadeService
         return _mapper.Map<List<UnidadeDto>>(unidades);
     }
 
-    public async Task<bool> Delete(int unidadeId, int usuarioId, CancellationToken ct)
+    public async Task<bool> Delete(int empresaId, int unidadeId, int usuarioId, CancellationToken ct)
     {
-        var unidade = await _UnitOfWork.Unidades.GetById(unidadeId, ct);
+        var unidades = await _UnitOfWork.Unidades.GetById(u => u.Id == unidadeId && u.EmpresaId == empresaId, ct);
+
+        var unidade = unidades.FirstOrDefault();
+
         if (unidade is null || unidade.FlExcluido)
             return false;
 

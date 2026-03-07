@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using Moq;
 using OsLog.Application.Common;
-using OsLog.Application.DTOs.Empresa;
+using OsLog.Application.DTOs.Unidade;
 using OsLog.Application.Services;
 using OsLog.Domain.Entities;
 
@@ -162,7 +162,7 @@ public class UnidadeServiceTests
             .ReturnsAsync((Unidade?)null);
 
         // Act
-        var ok = await _service.SoftDeleteAsync(1, 99, CancellationToken.None);
+        var ok = await _service.Delete(1, 99, 1, CancellationToken.None);
 
         // Assert
         Assert.False(ok);
@@ -185,7 +185,7 @@ public class UnidadeServiceTests
             .ReturnsAsync(unidade);
 
         // Act
-        var ok = await _service.SoftDeleteAsync(1, 99, CancellationToken.None);
+        var ok = await _service.Delete(1, 99, 1, CancellationToken.None);
 
         // Assert
         Assert.False(ok);
@@ -211,7 +211,7 @@ public class UnidadeServiceTests
             .ReturnsAsync(1);
 
         // Act
-        var ok = await _service.SoftDeleteAsync(1, 99, CancellationToken.None);
+        var ok = await _service.Delete(1, 99, 1, CancellationToken.None);
 
         // Assert
         Assert.True(ok);
