@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Asp.Versioning;
+using Microsoft.AspNetCore.Mvc;
 using OsLog.API.Extensions;
 using OsLog.Application.Common.Responses;
 using OsLog.Application.DTOs.Empresa;
@@ -7,7 +8,9 @@ using OsLog.Application.Ports.ApplicationServices;
 namespace OsLog.API.Controllers;
 
 [ApiController]
-[Route("api/empresas")]
+[ApiVersion("1.0")]
+[ApiVersion("2.0")]
+[Route("api/v{version:apiVersion}/empresas")]
 public class EmpresaController : ControllerBase
 {
     private readonly IEmpresaService _empresaService;

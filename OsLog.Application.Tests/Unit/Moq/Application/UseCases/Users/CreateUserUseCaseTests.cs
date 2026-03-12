@@ -47,23 +47,23 @@ namespace OsLog.Tests.Unit.Moq.Application.UseCases.Users
             return set.SetEquals(expected);
         }
 
-        private static bool ClaimsContainExactly(IEnumerable<Claim> claims,
-            params (string type, string value)[] expected)
-        {
-            if (claims is null) return false;
+        //private static bool ClaimsContainExactly(IEnumerable<Claim> claims,
+        //    params (string type, string value)[] expected)
+        //{
+        //    if (claims is null) return false;
 
-            var list = claims.ToList();
-            if (list.Count != expected.Length) return false;
+        //    var list = claims.ToList();
+        //    if (list.Count != expected.Length) return false;
 
-            foreach (var (type, value) in expected)
-            {
-                if (!list.Any(c => string.Equals(c.Type, type, StringComparison.OrdinalIgnoreCase)
-                                   && string.Equals(c.Value, value, StringComparison.Ordinal)))
-                    return false;
-            }
+        //    foreach (var (type, value) in expected)
+        //    {
+        //        if (!list.Any(c => string.Equals(c.Type, type, StringComparison.OrdinalIgnoreCase)
+        //                           && string.Equals(c.Value, value, StringComparison.Ordinal)))
+        //            return false;
+        //    }
 
-            return true;
-        }
+        //    return true;
+        //}
 
         [Trait("Unit Usuario", "Registro Usuario")]
         [Fact(DisplayName = "RegistroUsuario - Request nulo - Deve retornar Validation")]
