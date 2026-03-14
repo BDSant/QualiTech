@@ -21,7 +21,6 @@ public static class InfrastructureConfiguration
     /// <param name="configuration">Configuração da aplicação, utilizada para obter dados como a connection string.</param>
     /// <param name="environment">Ambiente atual da aplicação, utilizado para aplicar configurações específicas por ambiente.</param>
     /// <returns>A própria coleção de serviços, permitindo o encadeamento das configurações.</returns>
-
     public static IServiceCollection AddInfrastructureConfiguration(
         this IServiceCollection services,
         IConfiguration configuration,
@@ -103,9 +102,9 @@ public static class InfrastructureConfiguration
 
     private static IServiceCollection AddAutoMapperConfiguration(this IServiceCollection services)
     {
-        services.AddSingleton<MapperConfiguration>(sp =>
+        services.AddSingleton<MapperConfiguration>(mcf =>
         {
-            var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
+            var loggerFactory = mcf.GetRequiredService<ILoggerFactory>();
 
             var cfg = new MapperConfiguration(config =>
             {
@@ -113,11 +112,11 @@ public static class InfrastructureConfiguration
             }, loggerFactory);
 
             cfg.AssertConfigurationIsValid();
+
             return cfg;
         });
 
-        services.AddScoped<IMapper>(sp =>
-            sp.GetRequiredService<MapperConfiguration>().CreateMapper());
+        services.AddScoped<IMapper>(mcf => mcf.GetRequiredService<MapperConfiguration>().CreateMapper());
 
         return services;
     }

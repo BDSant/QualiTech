@@ -7,6 +7,7 @@ builder.Services.AddApiConfiguration(builder.Configuration);
 builder.Services.AddInfrastructureConfiguration(builder.Configuration, builder.Environment);
 builder.Services.AddDependencyInjectionConfiguration();
 builder.Services.AddSwaggerDocumentation();
+builder.Services.AddOpenApiDocumentation();
 
 var app = builder.Build();
 

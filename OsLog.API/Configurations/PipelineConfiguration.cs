@@ -15,6 +15,8 @@ public static class PipelineConfiguration
         if (app.Environment.IsDevelopment())
         {
             app.UseSwaggerDocumentation();
+            app.UseOpenApiDocumentation();
+            app.UseScalarUi();
         }
 
         app.UseHttpsRedirection();

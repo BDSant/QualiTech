@@ -1,6 +1,4 @@
-﻿//Configuração do Swagger, inclusive compatível com Asp.Versioning.
-
-using Asp.Versioning.ApiExplorer;
+﻿using Asp.Versioning.ApiExplorer;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -15,7 +13,6 @@ public static class SwaggerConfiguration
     /// </summary>
     /// <param name="services">Coleção de serviços utilizada para registrar os recursos de documentação da API.</param>
     /// <returns>A própria coleção de serviços, permitindo o encadeamento das configurações.</returns>
-
     public static IServiceCollection AddSwaggerDocumentation(this IServiceCollection services)
     {
         services.AddEndpointsApiExplorer();
@@ -38,29 +35,13 @@ public static class SwaggerConfiguration
             {
                 [new OpenApiSecuritySchemeReference("Bearer", document)] = []
             });
-
-            //options.AddSecurityRequirement(new OpenApiSecurityRequirement
-            //{
-            //    {
-            //        new OpenApiSecurityScheme
-            //        {
-            //            Reference = new OpenApiReference
-            //            {
-            //                Id = "Bearer",
-            //                Type = ReferenceType.SecurityScheme
-            //            }
-            //        },
-            //        Array.Empty<string>()
-            //    }
-            //});
         });
 
         return services;
     }
 
     /// <summary>
-    /// Habilita o Swagger e configura a interface Swagger UI com suporte às versões
-    /// descobertas da API.
+    /// Habilita o Swagger e configura a interface Swagger UI com suporte às versões descobertas da API.
     /// </summary>
     /// <param name="app">Aplicação Web utilizada para configurar os recursos de documentação da API.</param>
     /// <returns>A própria aplicação Web, permitindo o encadeamento das configurações.</returns>
@@ -68,18 +49,21 @@ public static class SwaggerConfiguration
     {
         var provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
 
-        app.UseSwagger();
+        app.UseSwagger(options =>
+        {
+            options.RouteTemplate = "docs/swagger/{documentName}.json";
+        });
 
         app.UseSwaggerUI(options =>
         {
             foreach (var description in provider.ApiVersionDescriptions)
             {
                 options.SwaggerEndpoint(
-                    $"/swagger/{description.GroupName}/swagger.json",
+                    $"/docs/swagger/{description.GroupName}.json",
                     $"OsLog.API {description.GroupName.ToUpperInvariant()}");
             }
 
-            options.RoutePrefix = "swagger";
+            options.RoutePrefix = "docs/swagger";
         });
 
         return app;
