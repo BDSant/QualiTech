@@ -16,18 +16,21 @@
 		<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 	  </PackageReference>
 	  <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.1" />
+	  <PackageReference Include="Scalar.AspNetCore" Version="2.13.6" />
 
 	  <!-- Swagger/Swashbuckle (referência direta) -->
-	  <PackageReference Include="Swashbuckle.AspNetCore" Version="10.0.1" />
-
-	  <!-- OpenAPI (mantém o pacote, mas vamos trocar o namespace usado no código) -->
-	  <PackageReference Include="Microsoft.OpenApi" Version="2.3.0" />
+	  <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.5" />
 
 	  <!-- NetDevPack JWT -->
 	  <PackageReference Include="NetDevPack.Security.Jwt.AspNetCore" Version="8.2.2" />
 	  <PackageReference Include="NetDevPack.Security.Jwt.Core" Version="8.2.2" />
 	</ItemGroup>
 
+  <ItemGroup>
+	<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
+	<PackageReference Include="Asp.Versioning.Mvc" Version="8.1.0" />
+	<PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" Version="8.1.0" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\OsLog.Application\OsLog.Application.csproj" />
