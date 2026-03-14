@@ -15,6 +15,6 @@ app.MapGet("/", () => "API OsLog rodando...");
 
 app.UseAppConfiguration();
 
-await IdentitySeed.SeedAsync(app.Services);
+await IdentitySeeder.SeedAsync(app.Services);
 
 app.Run();

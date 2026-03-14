@@ -5,7 +5,7 @@ using System.Security.Claims;
 
 namespace OsLog.Infrastructure.Identity;
 
-public static class IdentitySeed
+public static class IdentitySeeder
 {
     public static async Task SeedAsync(IServiceProvider serviceProvider)
     {
