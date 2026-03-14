@@ -22,22 +22,22 @@ public sealed class GetUserByIdUseCase
             return GetUserByIdUseCaseResult.NotFound();
 
         var rolesResult = await _identityAdminGateway.GetUserRolesAsync(user.Id, cancellationToken);
-        if (!rolesResult.Succeeded)
-            return GetUserByIdUseCaseResult.Fail(rolesResult.Errors);
 
         var claimsResult = await _identityAdminGateway.GetUserClaimsAsync(user.Id, cancellationToken);
-        if (!claimsResult.Succeeded)
-            return GetUserByIdUseCaseResult.Fail(claimsResult.Errors);
 
         var response = new UserDetailsResponse
         {
             UserId = user.Id,
-            UserName = user.UserName,
+            UserName = user.Nome,
             Email = user.Email,
-            EmailConfirmed = user.EmailConfirmed,
-            Roles = rolesResult.Data?.ToArray() ?? Array.Empty<string>(),
-            Claims = (claimsResult.Data ?? Array.Empty<System.Security.Claims.Claim>())
-                .Select(c => new ClaimResultDto { Type = c.Type, Value = c.Value })
+            EmailConfirmed = user.EmailConfirmado,
+            Roles = rolesResult,
+            Claims = claimsResult
+                .Select(c => new ClaimResultDto 
+                { 
+                    Type = c.Type, 
+                    Value = c.Value 
+                })
                 .ToArray()
         };
 

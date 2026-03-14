@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OsLog.Application.DTOs.Users;
 using OsLog.Application.UseCases.Users;
@@ -6,9 +7,10 @@ using OsLog.Application.UseCases.Users;
 namespace OsLog.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
 [Authorize(Roles = "Master,Admin")]
-public sealed class UsuariosController : ControllerBase
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/usuarios")]
+public sealed class UsuariosController : BaseApiController
 {
     private readonly CreateUserUseCase _createUserUseCase;
     private readonly GetUserByIdUseCase _getUserByIdUseCase;
@@ -17,16 +19,20 @@ public sealed class UsuariosController : ControllerBase
         CreateUserUseCase createUserUseCase,
         GetUserByIdUseCase getUserByIdUseCase)
     {
-        _createUserUseCase = createUserUseCase ?? throw new ArgumentNullException(nameof(createUserUseCase));
-        _getUserByIdUseCase = getUserByIdUseCase ?? throw new ArgumentNullException(nameof(getUserByIdUseCase));
+        _createUserUseCase = createUserUseCase
+            ?? throw new ArgumentNullException(nameof(createUserUseCase));
+
+        _getUserByIdUseCase = getUserByIdUseCase
+            ?? throw new ArgumentNullException(nameof(getUserByIdUseCase));
     }
 
-    // GET api/usuarios/{id}
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(UserDetailsResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> GetById([FromRoute] string id, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetById(
+        [FromRoute] string id,
+        CancellationToken cancellationToken)
     {
         var result = await _getUserByIdUseCase.ExecuteAsync(id, cancellationToken);
 
@@ -41,25 +47,35 @@ public sealed class UsuariosController : ControllerBase
             Title = "Falha ao consultar usuário",
             Detail = "Não foi possível obter o usuário com o id informado.",
             Status = StatusCodes.Status400BadRequest,
-            Extensions = { ["errors"] = result.Errors }
+            Extensions =
+            {
+                ["errors"] = result.Errors
+            }
         });
     }
 
-    // POST api/usuarios
     [HttpPost]
     [ProducesResponseType(typeof(CreateUserResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> Create([FromBody] CreateUserRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> Create(
+        [FromBody] CreateUserRequest request,
+        CancellationToken cancellationToken)
     {
         var result = await _createUserUseCase.ExecuteAsync(request, cancellationToken);
 
         if (result.Succeeded && result.Data is not null)
         {
+            var version = HttpContext.GetRequestedApiVersion()?.ToString() ?? "1.0";
+
             return CreatedAtAction(
-                actionName: nameof(GetById),
-                routeValues: new { id = result.Data.UserId },
-                value: result.Data);
+                nameof(GetById),
+                new
+                {
+                    version,
+                    id = result.Data.UserId
+                },
+                result.Data);
         }
 
         if (result.ErrorCode == CreateUserErrorCode.Conflict)
@@ -69,17 +85,24 @@ public sealed class UsuariosController : ControllerBase
                 Title = "Conflito ao criar usuário",
                 Detail = "Já existe um usuário cadastrado com os dados informados.",
                 Status = StatusCodes.Status409Conflict,
-                Extensions = { ["errors"] = result.Errors, ["errorCode"] = result.ErrorCode.ToString() }
+                Extensions =
+                {
+                    ["errors"] = result.Errors,
+                    ["errorCode"] = result.ErrorCode.ToString()
+                }
             });
         }
 
-        // Validation e IdentityError -> 400 (mínimo refactor)
         return BadRequest(new ProblemDetails
         {
             Title = "Falha ao criar usuário",
             Detail = "Não foi possível criar o usuário com os dados informados.",
             Status = StatusCodes.Status400BadRequest,
-            Extensions = { ["errors"] = result.Errors, ["errorCode"] = result.ErrorCode.ToString() }
+            Extensions =
+            {
+                ["errors"] = result.Errors,
+                ["errorCode"] = result.ErrorCode.ToString()
+            }
         });
     }
 }

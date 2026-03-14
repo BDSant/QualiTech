@@ -11,7 +11,7 @@ namespace OsLog.API.Controllers;
 [ApiVersion("1.0")]
 [ApiVersion("2.0")]
 [Route("api/v{version:apiVersion}/empresas")]
-public class EmpresaController : ControllerBase
+public class EmpresaController : BaseApiController
 {
     private readonly IEmpresaService _empresaService;
 
@@ -21,22 +21,33 @@ public class EmpresaController : ControllerBase
     }
 
     [HttpPost]
+    [ProducesResponseType(typeof(OsLogResponse<int>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(OsLogResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(OsLogResponse), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Create([FromBody] EmpresaCreateDto dto, CancellationToken ct)
     {
         // Validação de modelo -> envelope padronizado
         if (!ModelState.IsValid)
             return this.ValidationProblemOsLog(ModelState);
 
-        var usuarioId = 1; // TODO: pegar do usuário logado
-        var id = await _empresaService.Create(dto, usuarioId, ct);
+        var usuarioId = ObterUsuarioId();
+        if (!usuarioId.HasValue)
+        {
+            return Unauthorized(
+                OsLogResponse.Critica(
+                    codigo: CodigosOsLog.USUARIO_NAO_AUTENTICADO,
+                    mensagem: CriticasOsLog.RetornaCritica(CodigosOsLog.USUARIO_NAO_AUTENTICADO)));
+        }
 
-        //var payload = new { Id = id };
+        var id = await _empresaService.Create(dto, usuarioId.Value, ct);
+
+        var versao = HttpContext.GetRequestedApiVersion()?.ToString() ?? "1.0";
 
         return CreatedAtAction(nameof(GetById),
-                               new { id },
-                               OsLogResponse<object>.Ok(dados: id,
-                                                        mensagem: "Empresa criada com sucesso.")
-        );
+                                new { version = versao, id },
+                                OsLogResponse<object>.Ok(
+                                    dados: id, mensagem: "Empresa criada com sucesso."));
+
     }
 
     [HttpGet]

@@ -15,6 +15,8 @@ public static class CriticasOsLog
             CodigosOsLog.RELACAO_INCONSISTENTE => "Item não pertence à Ordem de serviço informada.",
             CodigosOsLog.ERRO_NEGOCIO => "Erro negocio.",
             CodigosOsLog.ERRO_INTERNO => "Erro interno.",
+            CodigosOsLog.USUARIO_NAO_AUTENTICADO => "Não foi possível identificar o usuário autenticado.",
+
             _ => "Ocorreu um erro interno. Contate o suporte."
         };
 }

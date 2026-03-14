@@ -1,13 +1,13 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using OsLog.Application.Common.Result;
+using OsLog.Application.Common.Security.ErrorCodes;
+using OsLog.Application.DTOs.Identity;
 using OsLog.Application.Ports.Identity.Admin;
 using System.Security.Claims;
 
 namespace OsLog.Infrastructure.Identity.Gateway;
 
-/// <summary>
-/// Implementação concreta do gateway administrativo de Identity.
-/// Aqui é o único lugar onde UserManager/RoleManager devem existir.
-/// </summary>
 public sealed class IdentityAdminGateway : IIdentityAdminGateway
 {
     private readonly UserManager<ApplicationUser> _userManager;
@@ -17,342 +17,498 @@ public sealed class IdentityAdminGateway : IIdentityAdminGateway
         UserManager<ApplicationUser> userManager,
         RoleManager<IdentityRole> roleManager)
     {
-        _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
-        _roleManager = roleManager ?? throw new ArgumentNullException(nameof(roleManager));
+        _userManager = userManager;
+        _roleManager = roleManager;
     }
 
-    public async Task<IdentityUserData?> GetUserByEmailAsync(string email, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyCollection<UsuarioListDto>> GetAllUsersAsync(CancellationToken ct = default)
     {
-        cancellationToken.ThrowIfCancellationRequested();
+        ct.ThrowIfCancellationRequested();
 
-        if (string.IsNullOrWhiteSpace(email))
-            return null;
+        var usuarios = await _userManager.Users
+            .AsNoTracking()
+            .OrderBy(u => u.UserName)
+            .Select(u => new UsuarioListDto
+            {
+                Id = u.Id,
+                Nome = u.UserName ?? string.Empty,
+                Email = u.Email ?? string.Empty,
+                EmailConfirmado = u.EmailConfirmed,
+                Ativo = !u.LockoutEnabled || u.LockoutEnd == null || u.LockoutEnd <= DateTimeOffset.UtcNow
+            })
+            .ToListAsync(ct);
 
-        var user = await _userManager.FindByEmailAsync(email.Trim());
-        return user is null ? null : ToUserData(user);
+        return usuarios;
     }
 
-    public async Task<IdentityUserData?> GetUserByIdAsync(string userId, CancellationToken cancellationToken = default)
+    public async Task<bool> UserExistsAsync(string userId, CancellationToken ct = default)
     {
-        cancellationToken.ThrowIfCancellationRequested();
+        ct.ThrowIfCancellationRequested();
 
         if (string.IsNullOrWhiteSpace(userId))
-            return null;
+            return false;
 
-        var user = await _userManager.FindByIdAsync(userId.Trim());
-        return user is null ? null : ToUserData(user);
+        var user = await _userManager.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == userId, ct);
+
+        return user is not null;
     }
 
-    public async Task<IdentityOperationResult<IdentityUserData>> CreateUserAsync(
-        string userName,
+    public async Task<Result<string>> CreateUserAsync(
         string email,
         string password,
-        bool emailConfirmed = false,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
-        cancellationToken.ThrowIfCancellationRequested();
+        ct.ThrowIfCancellationRequested();
 
-        if (string.IsNullOrWhiteSpace(userName) ||
-            string.IsNullOrWhiteSpace(email) ||
-            string.IsNullOrWhiteSpace(password))
+        var existing = await _userManager.FindByEmailAsync(email);
+        if (existing is not null)
         {
-            return IdentityOperationResult<IdentityUserData>.Failure("UserName, Email e Password são obrigatórios.");
+            return Result<string>.Fail(
+                new AppError(
+                    AuthErrorCodes.UserAlreadyExists,
+                    "Já existe um usuário com este e-mail.",
+                    ErrorType.Conflict));
         }
 
         var user = new ApplicationUser
         {
-            UserName = userName.Trim(),
-            Email = email.Trim(),
-            EmailConfirmed = emailConfirmed
+            UserName = email,
+            Email = email,
+            EmailConfirmed = true
         };
 
         var result = await _userManager.CreateAsync(user, password);
 
-        if (!result.Succeeded)
-        {
-            var code = MapIdentityResultToErrorCode(result);
-            return IdentityOperationResult<IdentityUserData>.Failure(code, ToErrors(result));
-        }
+        if (result.Succeeded)
+            return Result<string>.Ok(user.Id);
 
-        return IdentityOperationResult<IdentityUserData>.Success(ToUserData(user));
+        var errors = result.Errors
+            .Select(e => new AppError(
+                AuthErrorCodes.CreateUserFailed,
+                e.Description,
+                ErrorType.Validation))
+            .ToArray();
+
+        return Result<string>.Fail(errors);
     }
 
-    public async Task<IdentityOperationResult> EnsureRoleExistsAsync(string roleName, CancellationToken cancellationToken = default)
+    public async Task<Result> EnsureRoleExistsAsync(string roleName, CancellationToken ct = default)
     {
-        cancellationToken.ThrowIfCancellationRequested();
+        ct.ThrowIfCancellationRequested();
 
         if (string.IsNullOrWhiteSpace(roleName))
-            return IdentityOperationResult.Failure("RoleName é obrigatório.");
-
-        roleName = roleName.Trim();
-
-        if (await _roleManager.RoleExistsAsync(roleName))
-            return IdentityOperationResult.Success();
-
-        var create = await _roleManager.CreateAsync(new IdentityRole(roleName));
-        return create.Succeeded
-            ? IdentityOperationResult.Success()
-            : IdentityOperationResult.Failure(ToErrors(create));
-    }
-
-    public async Task<IdentityOperationResult> AddUserToRolesAsync(
-        string userId,
-        IEnumerable<string> roles,
-        CancellationToken cancellationToken = default)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-
-        var user = await FindUserOrFail(userId);
-        if (user is null) return IdentityOperationResult.Failure("Usuário não encontrado.");
-
-        var normalizedRoles = NormalizeRoles(roles);
-        if (normalizedRoles.Length == 0) return IdentityOperationResult.Success();
-
-        // Idempotência: adicionar apenas roles que o usuário ainda não possui
-        var currentRoles = await _userManager.GetRolesAsync(user);
-        var toAdd = normalizedRoles
-            .Except(currentRoles, StringComparer.OrdinalIgnoreCase)
-            .ToArray();
-
-        if (toAdd.Length == 0)
-            return IdentityOperationResult.Success();
-
-        var add = await _userManager.AddToRolesAsync(user, toAdd);
-        return add.Succeeded
-            ? IdentityOperationResult.Success()
-            : IdentityOperationResult.Failure(ToErrors(add));
-    }
-
-    public async Task<IdentityOperationResult> ReplaceUserRolesAsync(
-        string userId,
-        IEnumerable<string> roles,
-        CancellationToken cancellationToken = default)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-
-        var user = await FindUserOrFail(userId);
-        if (user is null) return IdentityOperationResult.Failure("Usuário não encontrado.");
-
-        var desired = NormalizeRoles(roles);
-        var current = await _userManager.GetRolesAsync(user);
-
-        var toRemove = current.Except(desired, StringComparer.OrdinalIgnoreCase).ToArray();
-        var toAdd = desired.Except(current, StringComparer.OrdinalIgnoreCase).ToArray();
-
-        if (toRemove.Length > 0)
         {
-            var rem = await _userManager.RemoveFromRolesAsync(user, toRemove);
-            if (!rem.Succeeded) return IdentityOperationResult.Failure(ToErrors(rem));
+            return Result.Fail(
+                new AppError(
+                    AuthErrorCodes.InvalidRole,
+                    "O nome da role é obrigatório.",
+                    ErrorType.Validation));
         }
 
-        if (toAdd.Length > 0)
-        {
-            var add = await _userManager.AddToRolesAsync(user, toAdd);
-            if (!add.Succeeded) return IdentityOperationResult.Failure(ToErrors(add));
-        }
+        var exists = await _roleManager.RoleExistsAsync(roleName);
+        if (exists)
+            return Result.Ok();
 
-        return IdentityOperationResult.Success();
+        var result = await _roleManager.CreateAsync(new IdentityRole(roleName));
+
+        if (result.Succeeded)
+            return Result.Ok();
+
+        var errors = result.Errors
+            .Select(e => new AppError(
+                AuthErrorCodes.CreateRoleFailed,
+                e.Description,
+                ErrorType.Validation))
+            .ToArray();
+
+        return Result.Fail(errors);
     }
 
-    public async Task<IdentityOperationResult> AddClaimsAsync(
+    public async Task<IReadOnlyCollection<string>> GetRolesAsync(CancellationToken ct = default)
+    {
+        ct.ThrowIfCancellationRequested();
+
+        var roles = await _roleManager.Roles
+            .AsNoTracking()
+            .OrderBy(r => r.Name)
+            .Select(r => r.Name!)
+            .ToListAsync(ct);
+
+        return roles;
+    }
+
+    public async Task<Result> AddUserToRoleAsync(
         string userId,
-        IEnumerable<Claim> claims,
-        CancellationToken cancellationToken = default)
+        string roleName,
+        CancellationToken ct = default)
     {
-        cancellationToken.ThrowIfCancellationRequested();
+        ct.ThrowIfCancellationRequested();
 
-        var user = await FindUserOrFail(userId);
-        if (user is null) return IdentityOperationResult.Failure("Usuário não encontrado.");
-
-        var normalizedClaims = NormalizeClaims(claims);
-        if (normalizedClaims.Length == 0) return IdentityOperationResult.Success();
-
-        // Idempotência: adicionar apenas claims que ainda não existem
-        var existing = await _userManager.GetClaimsAsync(user);
-        var toAdd = normalizedClaims
-            .Where(c => !existing.Any(e =>
-                string.Equals(e.Type, c.Type, StringComparison.OrdinalIgnoreCase) &&
-                string.Equals(e.Value, c.Value, StringComparison.Ordinal)))
-            .ToArray();
-
-        if (toAdd.Length == 0)
-            return IdentityOperationResult.Success();
-
-        var add = await _userManager.AddClaimsAsync(user, toAdd);
-        return add.Succeeded
-            ? IdentityOperationResult.Success()
-            : IdentityOperationResult.Failure(ToErrors(add));
-    }
-
-    public async Task<IdentityOperationResult> ReplaceClaimsAsync(
-        string userId,
-        IEnumerable<Claim> claims,
-        CancellationToken cancellationToken = default)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-
-        var user = await FindUserOrFail(userId);
-        if (user is null) return IdentityOperationResult.Failure("Usuário não encontrado.");
-
-        var desired = NormalizeClaims(claims);
-        if (desired.Length == 0) return IdentityOperationResult.Success();
-
-        // Estratégia: para os tipos presentes em "desired", remove todas as claims atuais desses tipos e insere as novas.
-        var desiredTypes = desired
-            .Select(c => c.Type)
-            .Where(t => !string.IsNullOrWhiteSpace(t))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToArray();
-
-        var existing = await _userManager.GetClaimsAsync(user);
-        var toRemove = existing
-            .Where(c => desiredTypes.Contains(c.Type, StringComparer.OrdinalIgnoreCase))
-            .ToArray();
-
-        if (toRemove.Length > 0)
-        {
-            var rem = await _userManager.RemoveClaimsAsync(user, toRemove);
-            if (!rem.Succeeded) return IdentityOperationResult.Failure(ToErrors(rem));
-        }
-
-        var add = await _userManager.AddClaimsAsync(user, desired);
-        return add.Succeeded
-            ? IdentityOperationResult.Success()
-            : IdentityOperationResult.Failure(ToErrors(add));
-    }
-
-    public async Task<IdentityOperationResult> RemoveClaimsAsync(
-        string userId,
-        IEnumerable<Claim> claims,
-        CancellationToken cancellationToken = default)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-
-        var user = await FindUserOrFail(userId);
-        if (user is null) return IdentityOperationResult.Failure("Usuário não encontrado.");
-
-        var normalized = NormalizeClaims(claims);
-        if (normalized.Length == 0) return IdentityOperationResult.Success();
-
-        // Idempotência: remover apenas o que existe
-        var existing = await _userManager.GetClaimsAsync(user);
-        var toRemove = normalized
-            .Where(c => existing.Any(e =>
-                string.Equals(e.Type, c.Type, StringComparison.OrdinalIgnoreCase) &&
-                string.Equals(e.Value, c.Value, StringComparison.Ordinal)))
-            .ToArray();
-
-        if (toRemove.Length == 0)
-            return IdentityOperationResult.Success();
-
-        var rem = await _userManager.RemoveClaimsAsync(user, toRemove);
-        return rem.Succeeded
-            ? IdentityOperationResult.Success()
-            : IdentityOperationResult.Failure(ToErrors(rem));
-    }
-
-    public async Task<IdentityOperationResult<IReadOnlyCollection<string>>> GetUserRolesAsync(
-    string userId,
-    CancellationToken cancellationToken = default)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-
-        var user = await FindUserOrFail(userId);
+        var user = await FindUserAsync(userId);
         if (user is null)
-            return IdentityOperationResult<IReadOnlyCollection<string>>.Failure("Usuário não encontrado.");
+        {
+            return Result.Fail(
+                new AppError(
+                    AuthErrorCodes.UserNotFound,
+                    "Usuário não encontrado.",
+                    ErrorType.NotFound));
+        }
+
+        var roleExists = await _roleManager.RoleExistsAsync(roleName);
+        if (!roleExists)
+        {
+            return Result.Fail(
+                new AppError(
+                    AuthErrorCodes.RoleNotFound,
+                    "Role não encontrada.",
+                    ErrorType.NotFound));
+        }
+
+        var alreadyInRole = await _userManager.IsInRoleAsync(user, roleName);
+        if (alreadyInRole)
+            return Result.Ok();
+
+        var result = await _userManager.AddToRoleAsync(user, roleName);
+
+        if (result.Succeeded)
+            return Result.Ok();
+
+        var errors = result.Errors
+            .Select(e => new AppError(
+                AuthErrorCodes.AddRoleFailed,
+                e.Description,
+                ErrorType.Validation))
+            .ToArray();
+
+        return Result.Fail(errors);
+    }
+
+    public async Task<Result> ReplaceUserRolesAsync(
+        string userId,
+        IEnumerable<string> roles,
+        CancellationToken ct = default)
+    {
+        ct.ThrowIfCancellationRequested();
+
+        var user = await FindUserAsync(userId);
+        if (user is null)
+        {
+            return Result.Fail(
+                new AppError(
+                    AuthErrorCodes.UserNotFound,
+                    "Usuário não encontrado.",
+                    ErrorType.NotFound));
+        }
+
+        var novasRoles = roles
+            .Where(r => !string.IsNullOrWhiteSpace(r))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        foreach (var role in novasRoles)
+        {
+            var exists = await _roleManager.RoleExistsAsync(role);
+            if (!exists)
+            {
+                return Result.Fail(
+                    new AppError(
+                        AuthErrorCodes.RoleNotFound,
+                        $"Role '{role}' não encontrada.",
+                        ErrorType.NotFound));
+            }
+        }
+
+        var atuais = await _userManager.GetRolesAsync(user);
+
+        var paraRemover = atuais
+            .Except(novasRoles, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var paraAdicionar = novasRoles
+            .Except(atuais, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (paraRemover.Count > 0)
+        {
+            var removeResult = await _userManager.RemoveFromRolesAsync(user, paraRemover);
+            if (!removeResult.Succeeded)
+            {
+                var errors = removeResult.Errors
+                    .Select(e => new AppError(
+                        AuthErrorCodes.RemoveRoleFailed,
+                        e.Description,
+                        ErrorType.Validation))
+                    .ToArray();
+
+                return Result.Fail(errors);
+            }
+        }
+
+        if (paraAdicionar.Count > 0)
+        {
+            var addResult = await _userManager.AddToRolesAsync(user, paraAdicionar);
+            if (!addResult.Succeeded)
+            {
+                var errors = addResult.Errors
+                    .Select(e => new AppError(
+                        AuthErrorCodes.AddRoleFailed,
+                        e.Description,
+                        ErrorType.Validation))
+                    .ToArray();
+
+                return Result.Fail(errors);
+            }
+        }
+
+        return Result.Ok();
+    }
+
+    public async Task<Result> RemoveUserFromRoleAsync(
+        string userId,
+        string roleName,
+        CancellationToken ct = default)
+    {
+        ct.ThrowIfCancellationRequested();
+
+        var user = await FindUserAsync(userId);
+        if (user is null)
+        {
+            return Result.Fail(
+                new AppError(
+                    AuthErrorCodes.UserNotFound,
+                    "Usuário não encontrado.",
+                    ErrorType.NotFound));
+        }
+
+        var inRole = await _userManager.IsInRoleAsync(user, roleName);
+        if (!inRole)
+            return Result.Ok();
+
+        var result = await _userManager.RemoveFromRoleAsync(user, roleName);
+
+        if (result.Succeeded)
+            return Result.Ok();
+
+        var errors = result.Errors
+            .Select(e => new AppError(
+                AuthErrorCodes.RemoveRoleFailed,
+                e.Description,
+                ErrorType.Validation))
+            .ToArray();
+
+        return Result.Fail(errors);
+    }
+
+    public async Task<IReadOnlyCollection<string>> GetUserRolesAsync(
+        string userId,
+        CancellationToken ct = default)
+    {
+        ct.ThrowIfCancellationRequested();
+
+        var user = await FindUserAsync(userId);
+        if (user is null)
+            return Array.Empty<string>();
 
         var roles = await _userManager.GetRolesAsync(user);
-        return IdentityOperationResult<IReadOnlyCollection<string>>.Success(roles.ToArray());
+        return roles.ToList();
     }
 
-    public async Task<IdentityOperationResult<IReadOnlyCollection<Claim>>> GetUserClaimsAsync(
+    public async Task<IReadOnlyCollection<UserClaimDto>> GetUserClaimsAsync(
         string userId,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
-        cancellationToken.ThrowIfCancellationRequested();
+        ct.ThrowIfCancellationRequested();
 
-        var user = await FindUserOrFail(userId);
+        var user = await FindUserAsync(userId);
         if (user is null)
-            return IdentityOperationResult<IReadOnlyCollection<Claim>>.Failure("Usuário não encontrado.");
+            return Array.Empty<UserClaimDto>();
 
         var claims = await _userManager.GetClaimsAsync(user);
-        return IdentityOperationResult<IReadOnlyCollection<Claim>>.Success(claims.ToArray());
+
+        return claims
+            .OrderBy(c => c.Type)
+            .ThenBy(c => c.Value)
+            .Select(c => new UserClaimDto
+            {
+                Type = c.Type,
+                Value = c.Value
+            })
+            .ToList();
     }
 
-    // ------------------------
-    // Helpers
-    // ------------------------
+    public async Task<Result> AddClaimToUserAsync(
+        string userId,
+        string claimType,
+        string claimValue,
+        CancellationToken ct = default)
+    {
+        ct.ThrowIfCancellationRequested();
 
-    private async Task<ApplicationUser?> FindUserOrFail(string userId)
+        var user = await FindUserAsync(userId);
+        if (user is null)
+        {
+            return Result.Fail(
+                new AppError(
+                    AuthErrorCodes.UserNotFound,
+                    "Usuário não encontrado.",
+                    ErrorType.NotFound));
+        }
+
+        var claims = await _userManager.GetClaimsAsync(user);
+        var exists = claims.Any(c =>
+            c.Type.Equals(claimType, StringComparison.OrdinalIgnoreCase) &&
+            c.Value.Equals(claimValue, StringComparison.Ordinal));
+
+        if (exists)
+            return Result.Ok();
+
+        var result = await _userManager.AddClaimAsync(user, new Claim(claimType, claimValue));
+
+        if (result.Succeeded)
+            return Result.Ok();
+
+        var errors = result.Errors
+            .Select(e => new AppError(
+                AuthErrorCodes.AddClaimFailed,
+                e.Description,
+                ErrorType.Validation))
+            .ToArray();
+
+        return Result.Fail(errors);
+    }
+
+    public async Task<Result> ReplaceUserClaimsAsync(
+        string userId,
+        IEnumerable<UserClaimDto> claims,
+        CancellationToken ct = default)
+    {
+        ct.ThrowIfCancellationRequested();
+
+        var user = await FindUserAsync(userId);
+        if (user is null)
+        {
+            return Result.Fail(
+                new AppError(
+                    AuthErrorCodes.UserNotFound,
+                    "Usuário não encontrado.",
+                    ErrorType.NotFound));
+        }
+
+        var atuais = await _userManager.GetClaimsAsync(user);
+
+        foreach (var claim in atuais)
+        {
+            var removeResult = await _userManager.RemoveClaimAsync(user, claim);
+            if (!removeResult.Succeeded)
+            {
+                var errors = removeResult.Errors
+                    .Select(e => new AppError(
+                        AuthErrorCodes.RemoveClaimFailed,
+                        e.Description,
+                        ErrorType.Validation))
+                    .ToArray();
+
+                return Result.Fail(errors);
+            }
+        }
+
+        var novasClaims = claims
+            .Where(c => !string.IsNullOrWhiteSpace(c.Type) && !string.IsNullOrWhiteSpace(c.Value))
+            .DistinctBy(c => new { Tipo = c.Type.ToUpperInvariant(), c.Value })
+            .ToList();
+
+        foreach (var claim in novasClaims)
+        {
+            var addResult = await _userManager.AddClaimAsync(user, new Claim(claim.Type, claim.Value));
+            if (!addResult.Succeeded)
+            {
+                var errors = addResult.Errors
+                    .Select(e => new AppError(
+                        AuthErrorCodes.AddClaimFailed,
+                        e.Description,
+                        ErrorType.Validation))
+                    .ToArray();
+
+                return Result.Fail(errors);
+            }
+        }
+
+        return Result.Ok();
+    }
+
+    public async Task<Result> RemoveClaimFromUserAsync(
+        string userId,
+        string claimType,
+        string claimValue,
+        CancellationToken ct = default)
+    {
+        ct.ThrowIfCancellationRequested();
+
+        var user = await FindUserAsync(userId);
+        if (user is null)
+        {
+            return Result.Fail(
+                new AppError(
+                    AuthErrorCodes.UserNotFound,
+                    "Usuário não encontrado.",
+                    ErrorType.NotFound));
+        }
+
+        var claims = await _userManager.GetClaimsAsync(user);
+
+        var claim = claims.FirstOrDefault(c =>
+            c.Type.Equals(claimType, StringComparison.OrdinalIgnoreCase) &&
+            c.Value.Equals(claimValue, StringComparison.Ordinal));
+
+        if (claim is null)
+            return Result.Ok();
+
+        var result = await _userManager.RemoveClaimAsync(user, claim);
+
+        if (result.Succeeded)
+            return Result.Ok();
+
+        var errors = result.Errors
+            .Select(e => new AppError(
+                AuthErrorCodes.RemoveClaimFailed,
+                e.Description,
+                ErrorType.Validation))
+            .ToArray();
+
+        return Result.Fail(errors);
+    }
+
+    private async Task<ApplicationUser?> FindUserAsync(string userId)
     {
         if (string.IsNullOrWhiteSpace(userId))
             return null;
 
-        return await _userManager.FindByIdAsync(userId.Trim());
+        return await _userManager.FindByIdAsync(userId);
     }
 
-    private static IdentityUserData ToUserData(ApplicationUser user) =>
-        new(
-            Id: user.Id,
-            UserName: user.UserName ?? string.Empty,
-            Email: user.Email ?? string.Empty,
-            EmailConfirmed: user.EmailConfirmed
-        );
-
-    private static string[] ToErrors(IdentityResult result) =>
-        result.Errors?.Select(e => e.Description).Where(s => !string.IsNullOrWhiteSpace(s)).ToArray()
-        ?? Array.Empty<string>();
-
-    private static string[] NormalizeRoles(IEnumerable<string> roles) =>
-        (roles ?? Array.Empty<string>())
-        .Where(r => !string.IsNullOrWhiteSpace(r))
-        .Select(r => r.Trim())
-        .Distinct(StringComparer.OrdinalIgnoreCase)
-        .ToArray();
-
-    private static Claim[] NormalizeClaims(IEnumerable<Claim> claims) =>
-        (claims ?? Array.Empty<Claim>())
-        .Where(c => c is not null && !string.IsNullOrWhiteSpace(c.Type))
-        .Select(c => new Claim(c.Type.Trim(), (c.Value ?? string.Empty).Trim()))
-        .Distinct(new ClaimTypeValueComparer())
-        .ToArray();
-
-    private sealed class ClaimTypeValueComparer : IEqualityComparer<Claim>
+    public async Task<UsuarioListDto?> GetUserByIdAsync(string userId, CancellationToken ct = default)
     {
-        public bool Equals(Claim? x, Claim? y)
+        ct.ThrowIfCancellationRequested();
+
+        if (string.IsNullOrWhiteSpace(userId))
+            return null;
+
+        var user = await _userManager.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == userId, ct);
+
+        if (user is null)
+            return null;
+
+        return new UsuarioListDto
         {
-            if (x is null && y is null) return true;
-            if (x is null || y is null) return false;
-
-            return string.Equals(x.Type, y.Type, StringComparison.OrdinalIgnoreCase)
-                   && string.Equals(x.Value, y.Value, StringComparison.Ordinal);
-        }
-
-        public int GetHashCode(Claim obj)
-        {
-            unchecked
-            {
-                var h1 = StringComparer.OrdinalIgnoreCase.GetHashCode(obj.Type ?? string.Empty);
-                var h2 = StringComparer.Ordinal.GetHashCode(obj.Value ?? string.Empty);
-                return (h1 * 397) ^ h2;
-            }
-        }
+            Id = user.Id,
+            Nome = user.UserName ?? string.Empty,
+            Email = user.Email ?? string.Empty,
+            EmailConfirmado = user.EmailConfirmed,
+            Ativo = !user.LockoutEnabled || user.LockoutEnd == null || user.LockoutEnd <= DateTimeOffset.UtcNow
+        };
     }
-
-    private static IdentityOperationErrorCode MapIdentityResultToErrorCode(IdentityResult result)
-    {
-        // Códigos padrão do ASP.NET Identity:
-        // - DuplicateEmail
-        // - DuplicateUserName
-        var hasDuplicate =
-            result.Errors?.Any(e =>
-                string.Equals(e.Code, "DuplicateEmail", StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(e.Code, "DuplicateUserName", StringComparison.OrdinalIgnoreCase)) == true;
-
-        return hasDuplicate
-            ? IdentityOperationErrorCode.Conflict
-            : IdentityOperationErrorCode.IdentityError;
-    }
-
 }
-

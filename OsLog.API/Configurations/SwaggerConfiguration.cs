@@ -13,7 +13,7 @@ public static class SwaggerConfiguration
     /// </summary>
     /// <param name="services">Coleção de serviços utilizada para registrar os recursos de documentação da API.</param>
     /// <returns>A própria coleção de serviços, permitindo o encadeamento das configurações.</returns>
-    public static IServiceCollection AddSwaggerDocumentation(this IServiceCollection services)
+    public static IServiceCollection UseSwaggerDocumentation(this IServiceCollection services)
     {
         services.AddEndpointsApiExplorer();
 

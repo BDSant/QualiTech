@@ -12,4 +12,6 @@ public static class CodigosOsLog
     public const int RELACAO_INCONSISTENTE = 12;
     public const int ERRO_NEGOCIO = 13;
     public const int ERRO_INTERNO = 14;
+    public const int USUARIO_NAO_AUTENTICADO = 15;
+
 }

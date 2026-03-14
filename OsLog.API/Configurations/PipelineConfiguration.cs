@@ -16,7 +16,7 @@ public static class PipelineConfiguration
         {
             app.UseSwaggerDocumentation();
             app.UseOpenApiDocumentation();
-            app.UseScalarUi();
+            app.UseScalarInterface();
         }
 
         app.UseHttpsRedirection();

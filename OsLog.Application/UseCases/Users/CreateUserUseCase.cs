@@ -1,15 +1,12 @@
-﻿using System.Security.Claims;
+﻿using OsLog.Application.Common.Result;
+using OsLog.Application.DTOs.Identity;
 using OsLog.Application.DTOs.Users;
 using OsLog.Application.Ports.Identity.Admin;
 
 namespace OsLog.Application.UseCases.Users;
 
 /// <summary>
-/// Caso de uso: Criação de usuário com atribuição opcional de roles e claims.
-///
-/// Clean Architecture:
-/// - Depende apenas de abstrações (IIdentityAdminGateway)
-/// - Não referencia ASP.NET Identity (UserManager/RoleManager) nem EF Core
+/// Caso de uso: criação de usuário com atribuição opcional de roles e claims.
 /// </summary>
 public sealed class CreateUserUseCase
 {
@@ -17,49 +14,44 @@ public sealed class CreateUserUseCase
 
     public CreateUserUseCase(IIdentityAdminGateway identityAdminGateway)
     {
-        _identityAdminGateway = identityAdminGateway ?? throw new ArgumentNullException(nameof(identityAdminGateway));
+        _identityAdminGateway = identityAdminGateway
+            ?? throw new ArgumentNullException(nameof(identityAdminGateway));
     }
 
-    /// <summary>
-    /// Executa o caso de uso.
-    /// </summary>
     public async Task<CreateUserUseCaseResult> ExecuteAsync(
         CreateUserRequest request,
         CancellationToken cancellationToken = default)
     {
         if (request is null)
-            return CreateUserUseCaseResult.Fail(CreateUserErrorCode.Validation, "Request inválido.");
+            return CreateUserUseCaseResult.Validation("Request inválido.");
 
-        // Validação mínima do request
         var errors = ValidateRequest(request);
         if (errors.Count > 0)
-            return CreateUserUseCaseResult.Fail(CreateUserErrorCode.Validation, errors);
+            return CreateUserUseCaseResult.Validation(errors);
 
-        // Garantir unicidade por e-mail
-        var existingUser = await _identityAdminGateway.GetUserByEmailAsync(request.Email, cancellationToken);
-        if (existingUser is not null)
-            return CreateUserUseCaseResult.Fail(CreateUserErrorCode.Conflict, "Já existe um usuário cadastrado com este e-mail.");
+        var existingUsers = await _identityAdminGateway.GetAllUsersAsync(cancellationToken);
 
-        // Criar usuário
-        var createResult = await _identityAdminGateway.CreateUserAsync(
-            userName: request.UserName.Trim(),
-            email: request.Email.Trim(),
-            password: request.Password,
-            emailConfirmed: request.EmailConfirmed,
-            cancellationToken: cancellationToken);
+        var emailJaExiste = existingUsers.Any(u =>
+            string.Equals(u.Email, request.Email.Trim(), StringComparison.OrdinalIgnoreCase));
 
-        if (!createResult.Succeeded || createResult.Data is null)
+        if (emailJaExiste)
         {
-            var mapped = createResult.ErrorCode == IdentityOperationErrorCode.Conflict
-                ? CreateUserErrorCode.Conflict
-                : CreateUserErrorCode.IdentityError;
-
-            return CreateUserUseCaseResult.Fail(mapped, createResult.Errors);
+            return CreateUserUseCaseResult.Conflict(
+                "Já existe um usuário cadastrado com este e-mail.");
         }
 
-        var created = createResult.Data;
+        var createResult = await _identityAdminGateway.CreateUserAsync(
+            email: request.Email.Trim(),
+            password: request.Password,
+            ct: cancellationToken);
 
-        // Roles (opcional)
+        if (!createResult.IsSuccess || string.IsNullOrWhiteSpace(createResult.Value))
+        {
+            return CreateUserUseCaseResult.IdentityError(ExtractErrors(createResult));
+        }
+
+        var userId = createResult.Value;
+
         var roles = (request.Roles ?? Array.Empty<string>())
             .Where(r => !string.IsNullOrWhiteSpace(r))
             .Select(r => r.Trim())
@@ -70,38 +62,59 @@ public sealed class CreateUserUseCase
         {
             foreach (var role in roles)
             {
-                var ensureRole = await _identityAdminGateway.EnsureRoleExistsAsync(role, cancellationToken);
-                if (!ensureRole.Succeeded)
-                    return CreateUserUseCaseResult.Fail(CreateUserErrorCode.IdentityError, ensureRole.Errors);
+                var ensureRoleResult = await _identityAdminGateway.EnsureRoleExistsAsync(
+                    role,
+                    cancellationToken);
+
+                if (!ensureRoleResult.IsSuccess)
+                    return CreateUserUseCaseResult.IdentityError(ExtractErrors(ensureRoleResult));
             }
 
-            var addRoles = await _identityAdminGateway.AddUserToRolesAsync(created.Id, roles, cancellationToken);
-            if (!addRoles.Succeeded)
-                return CreateUserUseCaseResult.Fail(CreateUserErrorCode.IdentityError, addRoles.Errors);
+            var replaceRolesResult = await _identityAdminGateway.ReplaceUserRolesAsync(
+                userId,
+                roles,
+                cancellationToken);
+
+            if (!replaceRolesResult.IsSuccess)
+                return CreateUserUseCaseResult.IdentityError(ExtractErrors(replaceRolesResult));
         }
 
-        // Claims (opcional)
         var claims = (request.Claims ?? Array.Empty<ClaimDto>())
-            .Where(c => c is not null && !string.IsNullOrWhiteSpace(c.Type) && c.Value is not null)
-            .Select(c => new Claim(c!.Type.Trim(), c.Value.Trim()))
-            .Distinct(new ClaimTypeValueComparer())
+            .Where(c => c is not null &&
+                        !string.IsNullOrWhiteSpace(c.Type) &&
+                        !string.IsNullOrWhiteSpace(c.Value))
+            .Select(c => new UserClaimDto
+            {
+                Type = c.Type.Trim(),
+                Value = c.Value.Trim()
+            })
+            .Distinct(new UserClaimDtoComparer())
             .ToArray();
 
         if (claims.Length > 0)
         {
-            var addClaims = await _identityAdminGateway.AddClaimsAsync(created.Id, claims, cancellationToken);
-            if (!addClaims.Succeeded)
-                return CreateUserUseCaseResult.Fail(CreateUserErrorCode.IdentityError, addClaims.Errors);
+            var replaceClaimsResult = await _identityAdminGateway.ReplaceUserClaimsAsync(
+                userId,
+                claims,
+                cancellationToken);
+
+            if (!replaceClaimsResult.IsSuccess)
+                return CreateUserUseCaseResult.IdentityError(ExtractErrors(replaceClaimsResult));
         }
 
-        // Resposta
         var response = new CreateUserResponse
         {
-            UserId = created.Id,
-            UserName = created.UserName,
-            Email = created.Email,
+            UserId = userId,
+            UserName = request.UserName.Trim(),
+            Email = request.Email.Trim(),
             Roles = roles,
-            Claims = claims.Select(c => new ClaimResultDto { Type = c.Type, Value = c.Value }).ToArray()
+            Claims = claims
+                .Select(c => new ClaimResultDto
+                {
+                    Type = c.Type,
+                    Value = c.Value
+                })
+                .ToArray()
         };
 
         return CreateUserUseCaseResult.Ok(response);
@@ -120,33 +133,60 @@ public sealed class CreateUserUseCase
         if (string.IsNullOrWhiteSpace(request.Password))
             errors.Add("Password é obrigatório.");
 
-        // Validação simples de confirmação (opcional)
-        if (request.ConfirmPassword is not null && request.Password != request.ConfirmPassword)
+        if (request.ConfirmPassword is not null &&
+            !string.Equals(request.Password, request.ConfirmPassword, StringComparison.Ordinal))
+        {
             errors.Add("Password e ConfirmPassword não conferem.");
+        }
 
-        // Evitar roles vazias
         if (request.Roles is not null && request.Roles.Any(r => string.IsNullOrWhiteSpace(r)))
             errors.Add("Lista de Roles contém valores inválidos.");
 
-        // Evitar claims inválidas
-        if (request.Claims is not null && request.Claims.Any(c => c is null || string.IsNullOrWhiteSpace(c.Type)))
+        if (request.Claims is not null &&
+            request.Claims.Any(c => c is null ||
+                                    string.IsNullOrWhiteSpace(c.Type) ||
+                                    string.IsNullOrWhiteSpace(c.Value)))
+        {
             errors.Add("Lista de Claims contém valores inválidos.");
+        }
 
         return errors;
     }
 
-    private sealed class ClaimTypeValueComparer : IEqualityComparer<Claim>
+    private static IReadOnlyCollection<string> ExtractErrors(Result result)
     {
-        public bool Equals(Claim? x, Claim? y)
+        if (result.Errors is null || result.Errors.Count == 0)
+            return new[] { "Erro de identidade não especificado." };
+
+        return result.Errors
+            .Select(e => e.Message)
+            .Where(m => !string.IsNullOrWhiteSpace(m))
+            .ToArray();
+    }
+
+    private static IReadOnlyCollection<string> ExtractErrors(Result<string> result)
+    {
+        if (result.Errors is null || result.Errors.Count == 0)
+            return new[] { "Erro de identidade não especificado." };
+
+        return result.Errors
+            .Select(e => e.Message)
+            .Where(m => !string.IsNullOrWhiteSpace(m))
+            .ToArray();
+    }
+
+    private sealed class UserClaimDtoComparer : IEqualityComparer<UserClaimDto>
+    {
+        public bool Equals(UserClaimDto? x, UserClaimDto? y)
         {
             if (x is null && y is null) return true;
             if (x is null || y is null) return false;
 
-            return string.Equals(x.Type, y.Type, StringComparison.OrdinalIgnoreCase)
-                   && string.Equals(x.Value, y.Value, StringComparison.Ordinal);
+            return string.Equals(x.Type, y.Type, StringComparison.OrdinalIgnoreCase) &&
+                   string.Equals(x.Value, y.Value, StringComparison.Ordinal);
         }
 
-        public int GetHashCode(Claim obj)
+        public int GetHashCode(UserClaimDto obj)
         {
             unchecked
             {
@@ -159,11 +199,7 @@ public sealed class CreateUserUseCase
 }
 
 /// <summary>
-/// Resultado específico do caso de uso.
-/// Mantém o contrato simples; a API pode mapear para HTTP (200/201/400/409).
-/// 
-/// Caso seu projeto já possua um Result<T> consolidado, você pode substituir este tipo
-/// por Result<CreateUserResponse> e remover esta classe.
+/// Resultado específico do caso de uso de criação de usuário.
 /// </summary>
 public sealed class CreateUserUseCaseResult
 {
@@ -186,7 +222,9 @@ public sealed class CreateUserUseCaseResult
 
     public static CreateUserUseCaseResult Ok(CreateUserResponse data)
     {
-        if (data is null) throw new ArgumentNullException(nameof(data));
+        if (data is null)
+            throw new ArgumentNullException(nameof(data));
+
         return new CreateUserUseCaseResult(
             succeeded: true,
             data: data,
@@ -212,27 +250,29 @@ public sealed class CreateUserUseCaseResult
     public static CreateUserUseCaseResult IdentityError(IEnumerable<string> errors) =>
         Fail(CreateUserErrorCode.IdentityError, errors);
 
-    public static CreateUserUseCaseResult Fail(CreateUserErrorCode code, params string[] errors) =>
+    public static CreateUserUseCaseResult Fail(
+        CreateUserErrorCode code,
+        params string[] errors) =>
         new(
             succeeded: false,
             data: null,
-            errors: (errors is { Length: > 0 })
-                ? errors
-                : new[] { "Erro desconhecido." },
+            errors: (errors is { Length: > 0 }) ? errors : new[] { "Erro desconhecido." },
             errorCode: code == CreateUserErrorCode.None ? CreateUserErrorCode.IdentityError : code);
 
-    public static CreateUserUseCaseResult Fail(CreateUserErrorCode code, IEnumerable<string> errors) =>
+    public static CreateUserUseCaseResult Fail(
+        CreateUserErrorCode code,
+        IEnumerable<string> errors) =>
         new(
             succeeded: false,
             data: null,
-            errors: (errors ?? Array.Empty<string>()).Where(e => !string.IsNullOrWhiteSpace(e)).ToArray(),
+            errors: (errors ?? Array.Empty<string>())
+                .Where(e => !string.IsNullOrWhiteSpace(e))
+                .ToArray(),
             errorCode: code == CreateUserErrorCode.None ? CreateUserErrorCode.IdentityError : code);
 }
 
-
 /// <summary>
 /// Códigos determinísticos de erro para o caso de uso de criação de usuário.
-/// A API usa isso para mapear corretamente HTTP (ex.: Conflict -> 409).
 /// </summary>
 public enum CreateUserErrorCode
 {
@@ -241,8 +281,3 @@ public enum CreateUserErrorCode
     Conflict = 2,
     IdentityError = 3
 }
-
-
-
-
-

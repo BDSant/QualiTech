@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using OsLog.Application.Common.Result;
+using System.Security.Claims;
 
 namespace OsLog.API.Controllers;
 
@@ -20,6 +21,21 @@ public abstract class BaseApiController : ControllerBase
             return StatusCode(successStatus, result.Value);
 
         return BuildErrorResponse(result.Errors);
+    }
+
+    protected int? ObterUsuarioId()
+    {
+        var claims = User.Claims.Select(c => new { c.Type, c.Value }).ToList();
+
+        var claimValue =
+            User.FindFirstValue(ClaimTypes.NameIdentifier) ??
+            User.FindFirstValue("sub") ??
+            User.FindFirstValue("userId") ??
+            User.FindFirstValue("userid");
+
+        return int.TryParse(claimValue, out var usuarioId)
+            ? usuarioId
+            : null;
     }
 
     private IActionResult BuildErrorResponse(IReadOnlyList<AppError> errors)

@@ -10,7 +10,7 @@ public static class ScalarConfiguration
     /// </summary>
     /// <param name="app">Aplicação Web utilizada para mapear os endpoints do Scalar.</param>
     /// <returns>A própria aplicação Web, permitindo o encadeamento das configurações.</returns>
-    public static WebApplication UseScalarUi(this WebApplication app)
+    public static WebApplication UseScalarInterface(this WebApplication app)
     {
         app.MapScalarApiReference("/docs/scalar", options =>
         {

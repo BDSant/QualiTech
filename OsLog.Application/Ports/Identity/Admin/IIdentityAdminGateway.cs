@@ -1,53 +1,65 @@
-﻿using System.Security.Claims;
+﻿using OsLog.Application.Common.Result;
+using OsLog.Application.DTOs.Identity;
 
 namespace OsLog.Application.Ports.Identity.Admin;
 
 public interface IIdentityAdminGateway
 {
-    Task<IdentityUserData?> GetUserByEmailAsync(string email, CancellationToken cancellationToken = default);
-    Task<IdentityUserData?> GetUserByIdAsync(string userId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<UsuarioListDto>> GetAllUsersAsync(CancellationToken ct = default);
 
-    Task<IdentityOperationResult<IdentityUserData>> CreateUserAsync(
-        string userName,
+    Task<bool> UserExistsAsync(string userId, CancellationToken ct = default);
+
+    Task<Result<string>> CreateUserAsync(
         string email,
         string password,
-        bool emailConfirmed = false,
-        CancellationToken cancellationToken = default);
+        CancellationToken ct = default);
 
-    Task<IdentityOperationResult> EnsureRoleExistsAsync(
+    Task<Result> EnsureRoleExistsAsync(
         string roleName,
-        CancellationToken cancellationToken = default);
+        CancellationToken ct = default);
 
-    Task<IdentityOperationResult> AddUserToRolesAsync(
+    Task<IReadOnlyCollection<string>> GetRolesAsync(
+        CancellationToken ct = default);
+
+    Task<Result> AddUserToRoleAsync(
+        string userId,
+        string roleName,
+        CancellationToken ct = default);
+
+    Task<Result> ReplaceUserRolesAsync(
         string userId,
         IEnumerable<string> roles,
-        CancellationToken cancellationToken = default);
+        CancellationToken ct = default);
 
-    Task<IdentityOperationResult> ReplaceUserRolesAsync(
+    Task<Result> RemoveUserFromRoleAsync(
         string userId,
-        IEnumerable<string> roles,
-        CancellationToken cancellationToken = default);
+        string roleName,
+        CancellationToken ct = default);
 
-    Task<IdentityOperationResult> AddClaimsAsync(
+    Task<IReadOnlyCollection<string>> GetUserRolesAsync(
         string userId,
-        IEnumerable<Claim> claims,
-        CancellationToken cancellationToken = default);
+        CancellationToken ct = default);
 
-    Task<IdentityOperationResult> ReplaceClaimsAsync(
+    Task<IReadOnlyCollection<UserClaimDto>> GetUserClaimsAsync(
         string userId,
-        IEnumerable<Claim> claims,
-        CancellationToken cancellationToken = default);
+        CancellationToken ct = default);
 
-    Task<IdentityOperationResult> RemoveClaimsAsync(
+    Task<Result> AddClaimToUserAsync(
         string userId,
-        IEnumerable<Claim> claims,
-        CancellationToken cancellationToken = default);
+        string claimType,
+        string claimValue,
+        CancellationToken ct = default);
 
-    Task<IdentityOperationResult<IReadOnlyCollection<string>>> GetUserRolesAsync(
+    Task<Result> ReplaceUserClaimsAsync(
         string userId,
-        CancellationToken cancellationToken = default);
+        IEnumerable<UserClaimDto> claims,
+        CancellationToken ct = default);
 
-    Task<IdentityOperationResult<IReadOnlyCollection<Claim>>> GetUserClaimsAsync(
+    Task<Result> RemoveClaimFromUserAsync(
         string userId,
-        CancellationToken cancellationToken = default);
+        string claimType,
+        string claimValue,
+        CancellationToken ct = default);
+
+    Task<UsuarioListDto?> GetUserByIdAsync(string userId, CancellationToken ct = default);
 }

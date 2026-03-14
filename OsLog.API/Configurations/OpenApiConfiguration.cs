@@ -9,7 +9,7 @@ public static class OpenApiConfiguration
     /// </summary>
     /// <param name="services">Coleção de serviços utilizada para registrar os documentos OpenAPI.</param>
     /// <returns>A própria coleção de serviços, permitindo o encadeamento das configurações.</returns>
-    public static IServiceCollection AddOpenApiDocumentation(this IServiceCollection services)
+    public static IServiceCollection UseOpenApiDocuments(this IServiceCollection services)
     {
         services.AddOpenApi("v1");
         services.AddOpenApi("v2");
