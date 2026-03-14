@@ -1,5 +1,5 @@
 ﻿using OsLog.API.Configurations;
-using OsLog.API.Identity;
+using OsLog.Infrastructure.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 

@@ -9,9 +9,8 @@ using OsLog.Application.Ports.ApplicationServices;
 namespace OsLog.API.Controllers;
 
 [ApiController]
-[Authorize]
+[Authorize(Roles = "Master,Admin")]
 [ApiVersion("1.0")]
-[ApiVersion("2.0")]
 [Route("api/v{version:apiVersion}/empresas")]
 public class EmpresaController : BaseApiController
 {
@@ -62,7 +61,7 @@ public class EmpresaController : BaseApiController
         if (lista.Count <= 0)
         {
             return NotFound(
-                OsLogResponse<EmpresaDetailDto>.Critica(
+                OsLogResponse.Critica(
                     codigo: CodigosOsLog.EMPRESA_NAO_ENCONTRADA,
                     mensagem: CriticasOsLog.RetornaCritica(CodigosOsLog.EMPRESA_NAO_ENCONTRADA)));
         }
@@ -83,7 +82,7 @@ public class EmpresaController : BaseApiController
         if (empresa is null)
         {
             return NotFound(
-                OsLogResponse<EmpresaDetailDto>.Critica(
+                OsLogResponse.Critica(
                     codigo: CodigosOsLog.EMPRESA_NAO_ENCONTRADA,
                     mensagem: CriticasOsLog.RetornaCritica(CodigosOsLog.EMPRESA_NAO_ENCONTRADA)));
         }
@@ -113,7 +112,7 @@ public class EmpresaController : BaseApiController
         if (!ok)
         {
             return NotFound(
-                OsLogResponse<object>.Critica(
+                OsLogResponse.Critica(
                     codigo: CodigosOsLog.EMPRESA_NAO_ENCONTRADA,
                     mensagem: CriticasOsLog.RetornaCritica(CodigosOsLog.EMPRESA_NAO_ENCONTRADA)));
         }

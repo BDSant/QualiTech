@@ -8,8 +8,8 @@ using OsLog.Application.Ports.Identity.Admin;
 namespace OsLog.API.Controllers;
 
 [ApiController]
-[Authorize(Roles = "Master,Admin")]
-[ApiVersion("1.0")]
+//[Authorize(Roles = "Master,Admin")]
+[ApiVersion("2.0")]
 [Route("api/v{version:apiVersion}/permissoes")]
 public sealed class PermissoesController : BaseApiController
 {

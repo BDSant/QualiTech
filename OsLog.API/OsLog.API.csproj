@@ -37,4 +37,8 @@
     <ProjectReference Include="..\OsLog.Infrastructure\OsLog.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Identity\" />
+  </ItemGroup>
+
 </Project>
