@@ -1,4 +1,5 @@
 ﻿using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OsLog.API.Extensions;
 using OsLog.Application.Common.Responses;
@@ -8,6 +9,7 @@ using OsLog.Application.Ports.ApplicationServices;
 namespace OsLog.API.Controllers;
 
 [ApiController]
+[Authorize]
 [ApiVersion("1.0")]
 [ApiVersion("2.0")]
 [Route("api/v{version:apiVersion}/empresas")]
@@ -26,7 +28,6 @@ public class EmpresaController : BaseApiController
     [ProducesResponseType(typeof(OsLogResponse), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Create([FromBody] EmpresaCreateDto dto, CancellationToken ct)
     {
-        // Validação de modelo -> envelope padronizado
         if (!ModelState.IsValid)
             return this.ValidationProblemOsLog(ModelState);
 
@@ -43,14 +44,17 @@ public class EmpresaController : BaseApiController
 
         var versao = HttpContext.GetRequestedApiVersion()?.ToString() ?? "1.0";
 
-        return CreatedAtAction(nameof(GetById),
-                                new { version = versao, id },
-                                OsLogResponse<object>.Ok(
-                                    dados: id, mensagem: "Empresa criada com sucesso."));
-
+        return CreatedAtAction(
+            nameof(GetById),
+            new { version = versao, id },
+            OsLogResponse<int>.Ok(
+                dados: id,
+                mensagem: "Empresa criada com sucesso."));
     }
 
     [HttpGet]
+    [ProducesResponseType(typeof(OsLogResponse<IEnumerable<EmpresaListDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(OsLogResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetAll(CancellationToken ct)
     {
         var lista = await _empresaService.GetAll(ct);
@@ -60,19 +64,18 @@ public class EmpresaController : BaseApiController
             return NotFound(
                 OsLogResponse<EmpresaDetailDto>.Critica(
                     codigo: CodigosOsLog.EMPRESA_NAO_ENCONTRADA,
-                    mensagem: CriticasOsLog.RetornaCritica(CodigosOsLog.EMPRESA_NAO_ENCONTRADA)
-                )
-            );
+                    mensagem: CriticasOsLog.RetornaCritica(CodigosOsLog.EMPRESA_NAO_ENCONTRADA)));
         }
 
         return Ok(
             OsLogResponse<IEnumerable<EmpresaListDto>>.Ok(
                 dados: lista,
-                mensagem: "Empresas retornadas com sucesso.")
-        );
+                mensagem: "Empresas retornadas com sucesso."));
     }
 
     [HttpGet("{id:int}")]
+    [ProducesResponseType(typeof(OsLogResponse<EmpresaDetailDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(OsLogResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(int id, CancellationToken ct)
     {
         var empresa = await _empresaService.GetById(id, ct);
@@ -82,35 +85,39 @@ public class EmpresaController : BaseApiController
             return NotFound(
                 OsLogResponse<EmpresaDetailDto>.Critica(
                     codigo: CodigosOsLog.EMPRESA_NAO_ENCONTRADA,
-                    mensagem: CriticasOsLog.RetornaCritica(CodigosOsLog.EMPRESA_NAO_ENCONTRADA)
-                )
-            );
+                    mensagem: CriticasOsLog.RetornaCritica(CodigosOsLog.EMPRESA_NAO_ENCONTRADA)));
         }
 
         return Ok(
             OsLogResponse<EmpresaDetailDto>.Ok(
                 dados: empresa,
-                mensagem: "Empresa encontrada.")
-        );
+                mensagem: "Empresa encontrada."));
     }
 
     [HttpDelete("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(OsLogResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(OsLogResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(int id, CancellationToken ct)
     {
-        var usuarioId = 1; // TODO: pegar do usuário logado
+        var usuarioId = ObterUsuarioId();
+        if (!usuarioId.HasValue)
+        {
+            return Unauthorized(
+                OsLogResponse.Critica(
+                    codigo: CodigosOsLog.USUARIO_NAO_AUTENTICADO,
+                    mensagem: CriticasOsLog.RetornaCritica(CodigosOsLog.USUARIO_NAO_AUTENTICADO)));
+        }
 
-        var ok = await _empresaService.Delete(id, usuarioId, ct);
+        var ok = await _empresaService.Delete(id, usuarioId.Value, ct);
         if (!ok)
         {
             return NotFound(
                 OsLogResponse<object>.Critica(
                     codigo: CodigosOsLog.EMPRESA_NAO_ENCONTRADA,
-                    mensagem: CriticasOsLog.RetornaCritica(CodigosOsLog.EMPRESA_NAO_ENCONTRADA)
-                )
-            );
+                    mensagem: CriticasOsLog.RetornaCritica(CodigosOsLog.EMPRESA_NAO_ENCONTRADA)));
         }
 
-        // Sem payload quando exclui com sucesso
         return NoContent();
     }
 }
