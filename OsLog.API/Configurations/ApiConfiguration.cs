@@ -1,29 +1,21 @@
 ﻿using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
+using OsLog.API.Authorization;
 using OsLog.Application.Common.Responses;
 using OsLog.Application.Common.Security.Jwt;
-using System.Security.Claims;
-using System.Text;
 
 namespace OsLog.API.Configurations;
 
 public static class ApiConfiguration
 {
-    /// <summary>
-    /// Registra as configurações principais da camada de API, incluindo controllers,
-    /// comportamento de validação, versionamento, opções e autenticação.
-    /// </summary>
-    /// <param name="services">Coleção de serviços da aplicação.</param>
-    /// <param name="configuration">Configuração da aplicação.</param>
-    /// <returns>A própria coleção de serviços para encadeamento.</returns>
     public static IServiceCollection AddApiConfiguration(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddControllersConfiguration();
         services.AddApiVersioningConfiguration();
         services.AddOptionsConfiguration(configuration);
-        services.AddAuthenticationConfiguration(configuration);
+        services.AddAuthenticationConfiguration();
 
         return services;
     }
@@ -84,35 +76,19 @@ public static class ApiConfiguration
         return services;
     }
 
-    private static IServiceCollection AddAuthenticationConfiguration(this IServiceCollection services, IConfiguration configuration)
+    private static IServiceCollection AddAuthenticationConfiguration(this IServiceCollection services)
     {
-        services
-            .AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(options =>
-            {
-                var jwt = configuration.GetSection("Jwt").Get<JwtOptions>()
-                          ?? throw new InvalidOperationException("Configuração Jwt não encontrada.");
-
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = jwt.Issuer,
-                    ValidAudience = jwt.Audience,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!)),
-                    NameClaimType = ClaimTypes.Name,
-                    RoleClaimType = ClaimTypes.Role
-                };
-            });
+        services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+        });
 
         services.AddAuthorization();
+
+        services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+        services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
 
         return services;
     }

@@ -1,6 +1,4 @@
-﻿//Esse arquivo limpa o pipeline HTTP e concentra middleware.
-
-namespace OsLog.API.Configurations;
+﻿namespace OsLog.API.Configurations;
 
 public static class PipelineConfiguration
 {

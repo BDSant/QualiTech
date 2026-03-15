@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using OsLog.Application.Common.Security;
 using System.Security.Claims;
 
 namespace OsLog.Infrastructure.Identity;
@@ -9,10 +10,6 @@ public static class IdentitySeeder
 {
     public static async Task SeedAsync(IServiceProvider serviceProvider)
     {
-
-
-
-
         using var scope = serviceProvider.CreateScope();
 
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
@@ -44,20 +41,12 @@ public static class IdentitySeeder
             }
         }
 
-        // Teste, remover para produção
-        var claims = await userManager.GetClaimsAsync(adminUser);
-
-        foreach (var claim in claims)
-        {
-            Console.WriteLine($"{claim.Type} = {claim.Value}");
-        }
-
         await EnsureUserInRoleAsync(userManager, adminUser, "Master");
         await EnsureUserInRoleAsync(userManager, adminUser, "Admin");
 
-        await EnsureClaimAsync(userManager, adminUser, "permissao", "empresa.criar");
-        await EnsureClaimAsync(userManager, adminUser, "permissao", "empresa.consultar");
-        await EnsureClaimAsync(userManager, adminUser, "permissao", "empresa.excluir");
+        await EnsureClaimAsync(userManager, adminUser, "permissao", Permissions.Empresa.Criar);
+        await EnsureClaimAsync(userManager, adminUser, "permissao", Permissions.Empresa.Consultar);
+        await EnsureClaimAsync(userManager, adminUser, "permissao", Permissions.Empresa.Excluir);
     }
 
     private static async Task EnsureRoleExistsAsync(

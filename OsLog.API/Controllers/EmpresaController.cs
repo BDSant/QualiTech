@@ -3,13 +3,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OsLog.API.Extensions;
 using OsLog.Application.Common.Responses;
+using OsLog.Application.Common.Security;
 using OsLog.Application.DTOs.Empresa;
 using OsLog.Application.Ports.ApplicationServices;
 
 namespace OsLog.API.Controllers;
 
 [ApiController]
-//[Authorize(Roles = "Master,Admin")]
 [Authorize]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/empresas")]
@@ -23,9 +23,11 @@ public class EmpresaController : BaseApiController
     }
 
     [HttpPost]
+    [Authorize(Policy = Permissions.Empresa.Criar)]
     [ProducesResponseType(typeof(OsLogResponse<int>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(OsLogResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(OsLogResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(OsLogResponse), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Create([FromBody] EmpresaCreateDto dto, CancellationToken ct)
     {
         if (!ModelState.IsValid)
@@ -53,8 +55,10 @@ public class EmpresaController : BaseApiController
     }
 
     [HttpGet]
+    [Authorize(Policy = Permissions.Empresa.Consultar)]
     [ProducesResponseType(typeof(OsLogResponse<IEnumerable<EmpresaListDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(OsLogResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(OsLogResponse), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetAll(CancellationToken ct)
     {
         var lista = await _empresaService.GetAll(ct);
@@ -74,8 +78,10 @@ public class EmpresaController : BaseApiController
     }
 
     [HttpGet("{id:int}")]
+    [Authorize(Policy = Permissions.Empresa.Consultar)]
     [ProducesResponseType(typeof(OsLogResponse<EmpresaDetailDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(OsLogResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(OsLogResponse), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetById(int id, CancellationToken ct)
     {
         var empresa = await _empresaService.GetById(id, ct);
@@ -95,8 +101,10 @@ public class EmpresaController : BaseApiController
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Policy = Permissions.Empresa.Excluir)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(OsLogResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(OsLogResponse), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(OsLogResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(int id, CancellationToken ct)
     {

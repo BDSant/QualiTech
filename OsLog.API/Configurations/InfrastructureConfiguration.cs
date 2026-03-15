@@ -1,13 +1,9 @@
-﻿//Este arquivo contém:
-//DbContext
-//Identity
-using AutoMapper;
+﻿using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using OsLog.Application.Mapping;
 using OsLog.Infrastructure.EntityFramework;
 using OsLog.Infrastructure.Identity;
-using System.Drawing;
 
 namespace OsLog.API.Configurations;
 
@@ -55,13 +51,6 @@ public static class InfrastructureConfiguration
 
                 if (environment.IsDevelopment())
                 {
-                    //Quando essa opção está ativa, o Entity Framework pode colocar nos logs 
-                    //informações sensíveis, por exemplo:
-                    //valores de parâmetros SQL
-                    //chaves
-                    //dados digitados pelo usuário
-                    //partes de entidades carregadas/salvas
-
                     options.EnableSensitiveDataLogging();
                 }
             });
@@ -85,9 +74,35 @@ public static class InfrastructureConfiguration
             .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
 
+        services.ConfigureApplicationCookie(options =>
+        {
+            options.Events.OnRedirectToLogin = context =>
+            {
+                if (context.Request.Path.StartsWithSegments("/api"))
+                {
+                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    return Task.CompletedTask;
+                }
+
+                context.Response.Redirect(context.RedirectUri);
+                return Task.CompletedTask;
+            };
+
+            options.Events.OnRedirectToAccessDenied = context =>
+            {
+                if (context.Request.Path.StartsWithSegments("/api"))
+                {
+                    context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                    return Task.CompletedTask;
+                }
+
+                context.Response.Redirect(context.RedirectUri);
+                return Task.CompletedTask;
+            };
+        });
+
         return services;
     }
-
     private static IServiceCollection AddJwksConfiguration(this IServiceCollection services)
     {
         services.AddMemoryCache();
