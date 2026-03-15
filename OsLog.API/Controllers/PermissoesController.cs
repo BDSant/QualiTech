@@ -25,6 +25,8 @@ public sealed class PermissoesController : BaseApiController
     [ProducesResponseType(typeof(string[]), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetRoles(CancellationToken cancellationToken)
     {
+        var usuarioId = ObterUsuarioId();
+
         var roles = await _identityAdminGateway.GetRolesAsync(cancellationToken);
         return Ok(roles);
     }

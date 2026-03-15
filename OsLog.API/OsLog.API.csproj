@@ -14,7 +14,7 @@
   </ItemGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="AutoMapper" Version="16.0.0" />
+	  <PackageReference Include="AutoMapper" Version="16.1.1" />
 
 	  <!-- EF Core 10.x -->
 	  <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.1" />
