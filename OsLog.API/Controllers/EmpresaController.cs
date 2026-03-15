@@ -23,7 +23,7 @@ public class EmpresaController : BaseApiController
     }
 
     [HttpPost]
-    [Authorize(Policy = Permissions.Empresa.Criar)]
+    [Authorize(Policy = "empresa.criar")]
     [ProducesResponseType(typeof(OsLogResponse<int>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(OsLogResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(OsLogResponse), StatusCodes.Status401Unauthorized)]
@@ -55,7 +55,7 @@ public class EmpresaController : BaseApiController
     }
 
     [HttpGet]
-    [Authorize(Policy = Permissions.Empresa.Consultar)]
+    [Authorize(Policy = "empresa.consultar")]
     [ProducesResponseType(typeof(OsLogResponse<IEnumerable<EmpresaListDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(OsLogResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(OsLogResponse), StatusCodes.Status403Forbidden)]
@@ -78,7 +78,7 @@ public class EmpresaController : BaseApiController
     }
 
     [HttpGet("{id:int}")]
-    [Authorize(Policy = Permissions.Empresa.Consultar)]
+    [Authorize(Policy = "empresa.consultar")]
     [ProducesResponseType(typeof(OsLogResponse<EmpresaDetailDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(OsLogResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(OsLogResponse), StatusCodes.Status403Forbidden)]
@@ -101,7 +101,7 @@ public class EmpresaController : BaseApiController
     }
 
     [HttpDelete("{id:int}")]
-    [Authorize(Policy = Permissions.Empresa.Excluir)]
+    [Authorize(Policy = "empresa.excluir")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(OsLogResponse), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(OsLogResponse), StatusCodes.Status403Forbidden)]

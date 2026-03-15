@@ -1,12 +1,13 @@
-﻿
-using Asp.Versioning;
+﻿using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
+using NetDevPack.Security.Jwt.Core.Model;
 using OsLog.API.Authorization;
 using OsLog.Application.Common.Responses;
-using OsLog.Application.Common.Security.Jwt;
+using AppJwtOptions = OsLog.Application.Common.Security.Jwt.JwtOptions;
 
 namespace OsLog.API.Configurations;
 
@@ -34,10 +35,9 @@ public static class ApiConfiguration
                         .Where(kvp => kvp.Value?.Errors.Count > 0)
                         .ToDictionary(
                             kvp => kvp.Key,
-                            kvp => kvp.Value!.Errors.Select(e => e.ErrorMessage).ToArray()
-                        );
+                            kvp => kvp.Value!.Errors.Select(e => e.ErrorMessage).ToArray());
 
-                    var payload = new OsLogResponse<object>
+                    var payload = new OsLogResponse
                     {
                         Sucesso = false,
                         Codigo = CodigosOsLog.ERRO_VALIDACAO,
@@ -74,14 +74,16 @@ public static class ApiConfiguration
 
     private static IServiceCollection AddOptionsConfiguration(this IServiceCollection services, IConfiguration configuration)
     {
-        services.Configure<JwtOptions>(configuration.GetSection("Jwt"));
+        services.Configure<AppJwtOptions>(configuration.GetSection("Jwt"));
         return services;
     }
 
     private static IServiceCollection AddAuthenticationConfiguration(this IServiceCollection services, IConfiguration configuration)
     {
-        var jwt = configuration.GetSection("Jwt").Get<JwtOptions>()
-                  ?? throw new InvalidOperationException("Configuração Jwt não encontrada.");
+        var jwt = configuration
+            .GetSection("Jwt")
+            .Get<OsLog.Application.Common.Security.Jwt.JwtOptions>()
+            ?? throw new InvalidOperationException("Configuração Jwt não encontrada.");
 
         services
             .AddAuthentication(options =>
@@ -110,24 +112,25 @@ public static class ApiConfiguration
                 {
                     OnAuthenticationFailed = context =>
                     {
-                        Console.WriteLine($"JWT auth failed: {context.Exception.GetType().Name} - {context.Exception.Message}");
+                        System.Diagnostics.Debug.WriteLine(
+                            $"JWT auth failed: {context.Exception.GetType().Name} - {context.Exception.Message}");
                         return Task.CompletedTask;
                     },
                     OnTokenValidated = context =>
                     {
-                        Console.WriteLine("JWT validado com sucesso.");
+                        System.Diagnostics.Debug.WriteLine("JWT validado com sucesso.");
                         return Task.CompletedTask;
                     },
                     OnChallenge = context =>
                     {
-                        Console.WriteLine($"JWT challenge. Error={context.Error}; Description={context.ErrorDescription}");
+                        System.Diagnostics.Debug.WriteLine(
+                            $"JWT challenge. Error={context.Error}; Description={context.ErrorDescription}");
                         return Task.CompletedTask;
                     }
                 };
             });
 
         services.AddAuthorization();
-
         services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
         services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
 
