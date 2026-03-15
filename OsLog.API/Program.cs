@@ -3,8 +3,8 @@ using OsLog.Infrastructure.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddApiConfiguration(builder.Configuration);
 builder.Services.AddInfrastructureConfiguration(builder.Configuration, builder.Environment);
+builder.Services.AddApiConfiguration(builder.Configuration);
 builder.Services.AddDependencyInjectionConfiguration();
 builder.Services.UseSwaggerDocumentation();
 builder.Services.UseOpenApiDocuments();

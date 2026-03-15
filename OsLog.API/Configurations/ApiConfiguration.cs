@@ -108,26 +108,45 @@ public static class ApiConfiguration
                     ValidAudience = jwt.Audience
                 };
 
-                options.Events = new JwtBearerEvents
-                {
-                    OnAuthenticationFailed = context =>
-                    {
-                        System.Diagnostics.Debug.WriteLine(
-                            $"JWT auth failed: {context.Exception.GetType().Name} - {context.Exception.Message}");
-                        return Task.CompletedTask;
-                    },
-                    OnTokenValidated = context =>
-                    {
-                        System.Diagnostics.Debug.WriteLine("JWT validado com sucesso.");
-                        return Task.CompletedTask;
-                    },
-                    OnChallenge = context =>
-                    {
-                        System.Diagnostics.Debug.WriteLine(
-                            $"JWT challenge. Error={context.Error}; Description={context.ErrorDescription}");
-                        return Task.CompletedTask;
-                    }
-                };
+                // DEBUG
+                //options.Events = new JwtBearerEvents
+                //{
+                //    OnAuthenticationFailed = context =>
+                //    {
+                //        var logger = context.HttpContext.RequestServices
+                //            .GetRequiredService<ILoggerFactory>()
+                //            .CreateLogger("JwtBearer");
+
+                //        logger.LogError(context.Exception,
+                //            "Falha na autenticação JWT. Tipo: {ExceptionType}. Mensagem: {Message}",
+                //            context.Exception.GetType().Name,
+                //            context.Exception.Message);
+
+                //        return Task.CompletedTask;
+                //    },
+                //    OnTokenValidated = context =>
+                //    {
+                //        var logger = context.HttpContext.RequestServices
+                //            .GetRequiredService<ILoggerFactory>()
+                //            .CreateLogger("JwtBearer");
+
+                //        logger.LogInformation("JWT validado com sucesso.");
+                //        return Task.CompletedTask;
+                //    },
+                //    OnChallenge = context =>
+                //    {
+                //        var logger = context.HttpContext.RequestServices
+                //            .GetRequiredService<ILoggerFactory>()
+                //            .CreateLogger("JwtBearer");
+
+                //        logger.LogWarning("JWT challenge. Error={Error}; Description={Description}",
+                //            context.Error,
+                //            context.ErrorDescription);
+
+                //        return Task.CompletedTask;
+                //    }
+                //};
+
             });
 
         services.AddAuthorization();
