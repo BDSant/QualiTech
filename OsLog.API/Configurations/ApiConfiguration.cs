@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using OsLog.API.Authorization;
 using OsLog.Application.Common.Responses;
 using OsLog.Application.Common.Security.Jwt;
@@ -15,7 +16,7 @@ public static class ApiConfiguration
         services.AddControllersConfiguration();
         services.AddApiVersioningConfiguration();
         services.AddOptionsConfiguration(configuration);
-        services.AddAuthenticationConfiguration();
+        services.AddAuthenticationConfiguration(configuration);
 
         return services;
     }
@@ -76,14 +77,53 @@ public static class ApiConfiguration
         return services;
     }
 
-    private static IServiceCollection AddAuthenticationConfiguration(this IServiceCollection services)
+    private static IServiceCollection AddAuthenticationConfiguration(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddAuthentication(options =>
-        {
-            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-        });
+        var jwt = configuration.GetSection("Jwt").Get<JwtOptions>()
+                  ?? throw new InvalidOperationException("Configuração Jwt não encontrada.");
+
+        services
+            .AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.RequireHttpsMetadata = true;
+                options.SaveToken = true;
+                options.IncludeErrorDetails = true;
+
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = jwt.Issuer,
+                    ValidAudience = jwt.Audience
+                };
+
+                options.Events = new JwtBearerEvents
+                {
+                    OnAuthenticationFailed = context =>
+                    {
+                        Console.WriteLine($"JWT auth failed: {context.Exception.GetType().Name} - {context.Exception.Message}");
+                        return Task.CompletedTask;
+                    },
+                    OnTokenValidated = context =>
+                    {
+                        Console.WriteLine("JWT validado com sucesso.");
+                        return Task.CompletedTask;
+                    },
+                    OnChallenge = context =>
+                    {
+                        Console.WriteLine($"JWT challenge. Error={context.Error}; Description={context.ErrorDescription}");
+                        return Task.CompletedTask;
+                    }
+                };
+            });
 
         services.AddAuthorization();
 
