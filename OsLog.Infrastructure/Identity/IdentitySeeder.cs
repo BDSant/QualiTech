@@ -9,6 +9,10 @@ public static class IdentitySeeder
 {
     public static async Task SeedAsync(IServiceProvider serviceProvider)
     {
+
+
+
+
         using var scope = serviceProvider.CreateScope();
 
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
@@ -38,6 +42,14 @@ public static class IdentitySeeder
                 var errors = string.Join(" | ", createResult.Errors.Select(e => e.Description));
                 throw new InvalidOperationException($"Erro ao criar usuário administrador: {errors}");
             }
+        }
+
+        // Teste, remover para produção
+        var claims = await userManager.GetClaimsAsync(adminUser);
+
+        foreach (var claim in claims)
+        {
+            Console.WriteLine($"{claim.Type} = {claim.Value}");
         }
 
         await EnsureUserInRoleAsync(userManager, adminUser, "Master");
