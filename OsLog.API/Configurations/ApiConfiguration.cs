@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using OsLog.Application.Common.Responses;
 using OsLog.Application.Common.Security.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace OsLog.API.Configurations;
 
@@ -85,10 +87,16 @@ public static class ApiConfiguration
     private static IServiceCollection AddAuthenticationConfiguration(this IServiceCollection services, IConfiguration configuration)
     {
         services
-            .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
             .AddJwtBearer(options =>
             {
-                var jwt = configuration.GetSection("Jwt").Get<JwtOptions>() ?? new JwtOptions();
+                var jwt = configuration.GetSection("Jwt").Get<JwtOptions>()
+                          ?? throw new InvalidOperationException("Configuração Jwt não encontrada.");
 
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
@@ -97,7 +105,10 @@ public static class ApiConfiguration
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
                     ValidIssuer = jwt.Issuer,
-                    ValidAudience = jwt.Audience
+                    ValidAudience = jwt.Audience,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!)),
+                    NameClaimType = ClaimTypes.Name,
+                    RoleClaimType = ClaimTypes.Role
                 };
             });
 

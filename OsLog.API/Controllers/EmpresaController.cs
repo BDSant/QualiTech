@@ -9,7 +9,8 @@ using OsLog.Application.Ports.ApplicationServices;
 namespace OsLog.API.Controllers;
 
 [ApiController]
-[Authorize(Roles = "Master,Admin")]
+//[Authorize(Roles = "Master,Admin")]
+[Authorize]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/empresas")]
 public class EmpresaController : BaseApiController

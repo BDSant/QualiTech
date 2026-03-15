@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OsLog.Application.UseCases.Autenticacao.ChangePassword;
 using OsLog.Application.UseCases.Autenticacao.Login;
@@ -8,6 +9,9 @@ using OsLog.Application.UseCases.Autenticacao.ResetPassword;
 
 namespace OsLog.API.Controllers;
 
+//[ApiController]
+[Authorize(Roles = "Master,Admin")]
+//[ApiVersion("2.0")]
 [Route("api/[controller]")]
 public class AutenticacaoController : BaseApiController
 {
@@ -34,6 +38,9 @@ public class AutenticacaoController : BaseApiController
     [HttpPost("login"), AllowAnonymous]
     public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken ct)
     {
+        request.Email = "master@oslog.local";
+        request.Senha = "Master@123456";
+
         var result = await _login.ExecuteAsync(request, ct);
         return CustomResponse(result, successStatus: 200);
     }
