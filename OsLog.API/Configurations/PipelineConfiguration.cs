@@ -19,6 +19,7 @@ public static class PipelineConfiguration
 
         app.UseHttpsRedirection();
 
+        app.UseJwksDiscovery();
         app.UseAuthentication();
         app.UseAuthorization();
 
