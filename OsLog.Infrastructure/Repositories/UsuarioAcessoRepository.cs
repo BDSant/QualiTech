@@ -11,15 +11,20 @@ public class UsuarioAcessoRepository : GenericRepository<UsuarioAcesso>, IUsuari
     {
     }
 
-    public async Task<List<UsuarioAcesso>> ObterAcessosPorUsuarioAsync(
-        string userId,
-        CancellationToken ct = default)
+    public async Task<UsuarioAcesso?> ObterPorUserIdAsync(string userId, CancellationToken ct = default)
+    {
+        return await _dbSet
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.IdentityUserId == userId && !x.FlAtivo, ct);
+    }
+
+    public async Task<IReadOnlyCollection<UsuarioAcesso>> ObterListaPorUserIdAsync(string userId, CancellationToken ct = default)
     {
         return await _dbSet
             .AsNoTracking()
             .Include(x => x.Empresa)
             .Include(x => x.Unidade)
-            .Where(x => x.UserId == userId && !x.FlExcluido)
+            .Where(x => x.IdentityUserId == userId && !x.FlAtivo)
             .ToListAsync(ct);
     }
 }

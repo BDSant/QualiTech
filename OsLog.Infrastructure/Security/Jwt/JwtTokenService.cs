@@ -42,13 +42,48 @@ public sealed class JwtTokenService : IJwtTokenService
         IEnumerable<string> roles,
         IEnumerable<Claim>? additionalClaims = null,
         CancellationToken ct = default)
-        => GenerateTokensInternalAsync(userId, email, roles, additionalClaims, rotateFromRefreshTokenId: null, ct);
+    {
+        return GenerateTokensInternalAsync(
+            userId,
+            email,
+            roles,
+            additionalClaims,
+            rotateFromRefreshTokenId: null,
+            ct);
+    }
 
-    public async Task<TokenResponseDto> RefreshAsync(string refreshToken, CancellationToken ct = default)
+    public Task<TokenResponseDto> GenerateTokensAsync(
+        string userId,
+        string email,
+        IEnumerable<string> roles,
+        int usuarioId,
+        IEnumerable<Claim>? additionalClaims = null,
+        CancellationToken ct = default)
+    {
+        var claims = new List<Claim>
+        {
+            new("usuarioId", usuarioId.ToString())
+        };
+
+        if (additionalClaims is not null)
+            claims.AddRange(additionalClaims);
+
+        return GenerateTokensInternalAsync(
+            userId,
+            email,
+            roles,
+            claims,
+            rotateFromRefreshTokenId: null,
+            ct);
+    }
+
+    public async Task<TokenResponseDto> RefreshAsync(
+        string refreshToken,
+        CancellationToken ct = default)
     {
         var oldHash = Sha256Hex(refreshToken);
-
         var valid = await _refreshTokenStore.GetValidAsync(oldHash, ct);
+
         if (valid is null)
             throw new SecurityTokenException("Refresh token inválido ou expirado.");
 
@@ -61,7 +96,6 @@ public sealed class JwtTokenService : IJwtTokenService
         var roles = await _userManager.GetRolesAsync(user);
         var userClaims = await _userManager.GetClaimsAsync(user);
 
-        // Rotaciona: gera novo refresh e revoga o anterior apontando para o novo hash
         return await GenerateTokensInternalAsync(
             user.Id,
             user.Email ?? user.UserName ?? string.Empty,
@@ -71,7 +105,9 @@ public sealed class JwtTokenService : IJwtTokenService
             ct);
     }
 
-    public async Task LogoutAsync(string refreshToken, CancellationToken ct = default)
+    public async Task LogoutAsync(
+        string refreshToken,
+        CancellationToken ct = default)
     {
         var hash = Sha256Hex(refreshToken);
         await _refreshTokenStore.RevokeByHashAsync(hash, ct);
@@ -99,10 +135,10 @@ public sealed class JwtTokenService : IJwtTokenService
 
         if (additionalClaims is not null)
         {
-            foreach (var c in additionalClaims)
+            foreach (var claim in additionalClaims)
             {
-                if (!claims.Any(x => x.Type == c.Type && x.Value == c.Value))
-                    claims.Add(c);
+                if (!claims.Any(x => x.Type == claim.Type && x.Value == claim.Value))
+                    claims.Add(claim);
             }
         }
 

@@ -13,6 +13,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>, ISecurityKeyCont
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
     public DbSet<Empresa> Empresas { get; set; } = null!;
+    public DbSet<UsuarioAcesso> UsuariosAcesso => Set<UsuarioAcesso>();
 
     // Implementação correta da interface (tipo e nome exatamente como exigido)
     public DbSet<KeyMaterial> SecurityKeys { get; set; } = null!;

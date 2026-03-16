@@ -25,18 +25,27 @@ public abstract class BaseApiController : ControllerBase
 
     protected int? ObterUsuarioId()
     {
-        var claims = User.Claims.Select(c => new { c.Type, c.Value }).ToList();
-
-        var claimValue =
-            User.FindFirstValue(ClaimTypes.NameIdentifier) ??
-            User.FindFirstValue("sub") ??
-            User.FindFirstValue("userId") ??
-            User.FindFirstValue("userid");
+        var claimValue = User.FindFirstValue("usuarioId");
 
         return int.TryParse(claimValue, out var usuarioId)
             ? usuarioId
             : null;
     }
+
+    //protected int? ObterUsuarioId()
+    //{
+    //    var claims = User.Claims.Select(c => new { c.Type, c.Value }).ToList();
+
+    //    var claimValue =
+    //        User.FindFirstValue(ClaimTypes.NameIdentifier) ??
+    //        User.FindFirstValue("sub") ??
+    //        User.FindFirstValue("userId") ??
+    //        User.FindFirstValue("userid");
+
+    //    return int.TryParse(claimValue, out var usuarioId)
+    //        ? usuarioId
+    //        : null;
+    //}
 
     private IActionResult BuildErrorResponse(IReadOnlyList<AppError> errors)
     {

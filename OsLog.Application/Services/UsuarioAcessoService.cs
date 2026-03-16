@@ -21,34 +21,38 @@ public class UsuarioAcessoService : IUsuarioAcessoService
         string userId,
         CancellationToken ct = default)
     {
-        // Carrega os vínculos + empresa/unidade
-        var acessos = await _UnitOfWork.UsuarioAcessos.ObterAcessosPorUsuarioAsync(userId, ct);
+        var acessos = await _UnitOfWork.UsuarioAcessos.ObterListaPorUserIdAsync(userId, ct);
 
-        // Agrupa por empresa
+        if (acessos is null || !acessos.Any())
+            return Array.Empty<EmpresaAcessoDto>();
+
         var resultado = acessos
-            .GroupBy(x => x.Empresa)
+            .Where(x => x.Empresa is not null)
+            .GroupBy(x => new
+            {
+                x.EmpresaId,
+                x.Empresa!.RazaoSocial,
+                x.Empresa.NomeFantasia
+            })
             .Select(grp =>
             {
-                var empresa = grp.Key;
+                var acessoTotal = grp.Any(x => x.UnidadeId == null);
 
-                bool acessoTotal = grp.Any(x => x.UnidadeId == null);
-
-                // Se acesso total, você pode opcionalmente listar TODAS unidades da empresa
-                // mesmo que não haja vínculo individual por unidade.
                 var acessosPorUnidade = grp
-                    .Where(x => x.UnidadeId != null && x.Unidade != null)
+                    .Where(x => x.UnidadeId.HasValue && x.Unidade is not null)
+                    .GroupBy(x => x.UnidadeId)
+                    .Select(x => x.First())
                     .ToList();
 
-                var unidadesAcesso = _mapper
-                     .Map<List<UnidadeAcessoDto>>(acessosPorUnidade);
+                var unidadesAcesso = _mapper.Map<List<UnidadeAcessoDto>>(acessosPorUnidade);
 
                 return new EmpresaAcessoDto
                 {
-                    EmpresaId = empresa.Id,
-                    RazaoSocial = empresa.RazaoSocial,
-                    NomeFantasia = empresa.NomeFantasia,
+                    EmpresaId = grp.Key.EmpresaId,
+                    RazaoSocial = grp.Key.RazaoSocial,
+                    NomeFantasia = grp.Key.NomeFantasia,
                     AcessoTotalEmpresa = acessoTotal,
-                    Unidades = unidadesAcesso
+                    Unidades = acessoTotal ? new List<UnidadeAcessoDto>() : unidadesAcesso
                 };
             })
             .ToList();

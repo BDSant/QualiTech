@@ -12,17 +12,28 @@ public class UsuarioAcessoConfiguration : IEntityTypeConfiguration<UsuarioAcesso
 
         builder.HasKey(ua => ua.Id);
 
-        builder.Property(ua => ua.UserId)
+        builder.Property(x => x.Nome)
+            .HasMaxLength(150)
+            .IsRequired();
+
+        builder.Property(x => x.Email)
+            .HasMaxLength(150)
+            .IsRequired();
+
+        builder.Property(ua => ua.IdentityUserId)
             .HasMaxLength(450)
             .IsRequired();
+
+        builder.HasIndex(x => x.IdentityUserId)
+            .IsUnique();
 
         builder.Property(ua => ua.Perfil)
             .IsRequired();
 
-        builder.Property(ua => ua.FlExcluido)
+        builder.Property(ua => ua.FlAtivo)
             .HasDefaultValue(false);
 
-        builder.Property(ua => ua.DataCadastro)
+        builder.Property(ua => ua.DataCriacao)
             .IsRequired();
 
         // Relacionamento com Empresa
@@ -38,7 +49,7 @@ public class UsuarioAcessoConfiguration : IEntityTypeConfiguration<UsuarioAcesso
             .OnDelete(DeleteBehavior.NoAction);
 
         // Índices úteis (opcional mas recomendável)
-        builder.HasIndex(ua => ua.UserId);
-        builder.HasIndex(ua => new { ua.UserId, ua.EmpresaId });
+        builder.HasIndex(ua => ua.IdentityUserId);
+        builder.HasIndex(ua => new { ua.IdentityUserId, ua.EmpresaId });
     }
 }
