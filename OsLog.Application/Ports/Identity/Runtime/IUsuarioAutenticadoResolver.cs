@@ -4,5 +4,5 @@ namespace OsLog.Application.Ports.Identity.Runtime;
 
 public interface IUsuarioAutenticadoResolver
 {
-    Task<int?> ObterPorUserIdAsync(string userId, CancellationToken ct = default);
+    Task<int?> ObterUsuarioIdAsync(string userId, CancellationToken ct = default);
 }

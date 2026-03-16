@@ -81,7 +81,7 @@ public sealed class LoginUseCase : ILoginUseCase
         //         "Usuário bloqueado temporariamente por tentativas inválidas.",
         //         ErrorType.Forbidden));
 
-        var usuarioId = await _usuarioAutenticadoResolver.ObterPorUserIdAsync(user.Id, ct);
+        var usuarioId = await _usuarioAutenticadoResolver.ObterUsuarioIdAsync(user.Id, ct);
 
         if (!usuarioId.HasValue)
         {

@@ -12,7 +12,7 @@ public sealed class UsuarioAutenticadoResolver : IUsuarioAutenticadoResolver
         _usuarioAcessoRepository = usuarioAcessoRepository;
     }
 
-    public async Task<int?> ObterPorUserIdAsync(string userId, CancellationToken ct = default)
+    public async Task<int?> ObterUsuarioIdAsync(string userId, CancellationToken ct = default)
     {
         var usuarioAcesso = await _usuarioAcessoRepository.ObterPorUserIdAsync(userId, ct);
         return usuarioAcesso?.Id;
