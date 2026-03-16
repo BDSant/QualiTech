@@ -13,6 +13,7 @@ using OsLog.Application.UseCases.Autenticacao.ResetPassword;
 using OsLog.Application.UseCases.Users;
 using OsLog.Infrastructure.Identity;
 using OsLog.Infrastructure.Identity.Gateway;
+using OsLog.Infrastructure.Identity.Runtime;
 using OsLog.Infrastructure.Repositories;
 using OsLog.Infrastructure.Security.Jwt;
 using OsLog.Infrastructure.UnitOfWork;
@@ -61,6 +62,7 @@ public static class DependencyInjectionConfiguration
         services.AddScoped<IRefreshTokenStore, RefreshTokenStore>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IIdentityGateway, IdentityGateway>();
+        services.AddScoped<IUsuarioAutenticadoResolver, UsuarioAutenticadoResolver>();
 
         services.AddScoped<IEmpresaService, EmpresaService>();
         services.AddScoped<IClienteService, ClienteService>();

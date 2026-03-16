@@ -3,7 +3,6 @@ using OsLog.Application.Common.Security.ErrorCodes;
 using OsLog.Application.DTOs.Auth;
 using OsLog.Application.Ports.Identity.Runtime;
 using OsLog.Application.Ports.Security;
-using OsLog.Application.Ports.Users;
 
 namespace OsLog.Application.UseCases.Autenticacao.Login;
 
