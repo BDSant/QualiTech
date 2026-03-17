@@ -49,7 +49,7 @@ public class EmpresaController : BaseApiController
         return CreatedAtAction(
             nameof(GetById),
             new { version = versao, id },
-            OsLogResponse<int>.Ok(
+            OsLogResponse<Guid>.Ok(
                 dados: id,
                 mensagem: "Empresa criada com sucesso."));
     }
@@ -82,7 +82,7 @@ public class EmpresaController : BaseApiController
     [ProducesResponseType(typeof(OsLogResponse<EmpresaDetailDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(OsLogResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(OsLogResponse), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> GetById(int id, CancellationToken ct)
+    public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
     {
         var empresa = await _empresaService.GetById(id, ct);
 
@@ -106,7 +106,7 @@ public class EmpresaController : BaseApiController
     [ProducesResponseType(typeof(OsLogResponse), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(OsLogResponse), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(OsLogResponse), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Delete(int id, CancellationToken ct)
+    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         var usuarioId = ObterUsuarioId();
         if (!usuarioId.HasValue)

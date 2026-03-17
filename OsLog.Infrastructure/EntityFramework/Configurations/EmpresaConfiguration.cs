@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using OsLog.Domain.Entities;
 
-namespace OsLog.Infrastructure.EF.Configurations;
+namespace OsLog.Infrastructure.EntityFramework.Configurations;
 
 public class EmpresaConfiguration : IEntityTypeConfiguration<Empresa>
 {
@@ -12,32 +12,26 @@ public class EmpresaConfiguration : IEntityTypeConfiguration<Empresa>
 
         builder.HasKey(e => e.Id);
 
+        builder.Property(e => e.Id)
+            .ValueGeneratedNever();
+
         builder.Property(e => e.RazaoSocial)
-            .HasMaxLength(200)
-            .IsRequired();
+            .IsRequired()
+            .HasMaxLength(150);
 
         builder.Property(e => e.NomeFantasia)
-            .HasMaxLength(200)
-            .IsRequired();
+            .IsRequired()
+            .HasMaxLength(120);
 
-        builder.Property(e => e.Cnpj)
-            .HasMaxLength(18);
+        builder.Property(e => e.Ativa)
+            .IsRequired()
+            .HasDefaultValue(true);
 
-        builder.Property(e => e.FlExcluido)
-            .HasDefaultValue(false);
+        builder.Property(e => e.DataCriacaoUtc)
+            .IsRequired()
+            .HasColumnType("datetime2");
 
-        builder.Property(e => e.DataCriacao)
-            .IsRequired();
-
-        // Relacionamentos
-        builder.HasMany(e => e.Unidades)
-            .WithOne(u => u.Empresa)
-            .HasForeignKey(u => u.EmpresaId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        builder.HasMany(e => e.UsuariosAcesso)
-            .WithOne(ua => ua.Empresa)
-            .HasForeignKey(ua => ua.EmpresaId)
-            .OnDelete(DeleteBehavior.Cascade);
+        builder.HasIndex(e => e.RazaoSocial);
+        builder.HasIndex(e => e.NomeFantasia);
     }
 }

@@ -240,41 +240,32 @@ namespace OsLog.Infrastructure.Migrations
 
             modelBuilder.Entity("OsLog.Domain.Entities.Empresa", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("AlteradoPor")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Cnpj")
-                        .HasMaxLength(18)
-                        .HasColumnType("nvarchar(18)");
-
-                    b.Property<DateTime?>("DataAlteracao")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("DataCriacao")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("FlExcluido")
+                    b.Property<bool>("Ativa")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
-                        .HasDefaultValue(false);
+                        .HasDefaultValue(true);
+
+                    b.Property<DateTime>("DataCriacaoUtc")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("NomeFantasia")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
 
                     b.Property<string>("RazaoSocial")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("NomeFantasia");
+
+                    b.HasIndex("RazaoSocial");
 
                     b.ToTable("Empresa", "Empresa");
                 });
@@ -408,30 +399,25 @@ namespace OsLog.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("AlteradoPor")
-                        .HasColumnType("int");
+                    b.Property<bool>("Ativa")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
 
                     b.Property<string>("Cnpj")
+                        .IsRequired()
                         .HasMaxLength(18)
                         .HasColumnType("nvarchar(18)");
 
-                    b.Property<DateTime?>("DataAlteracao")
+                    b.Property<DateTime>("DataCriacaoUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("DataCriacao")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("EmpresaId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("EmpresaId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Endereco")
                         .HasMaxLength(300)
                         .HasColumnType("nvarchar(300)");
-
-                    b.Property<bool>("FlExcluido")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
 
                     b.Property<string>("InscricaoEstadual")
                         .HasMaxLength(50)
@@ -450,9 +436,17 @@ namespace OsLog.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<int>("Tipo")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
+                    b.HasIndex("Cnpj")
+                        .IsUnique();
+
                     b.HasIndex("EmpresaId");
+
+                    b.HasIndex("EmpresaId", "Tipo");
 
                     b.ToTable("Unidade", "Empresa");
                 });
@@ -465,43 +459,30 @@ namespace OsLog.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("AlteradoPor")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("DataAlteracao")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("DataCriacao")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
-
-                    b.Property<int>("EmpresaId")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("FlAtivo")
+                    b.Property<bool>("Ativo")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
                         .HasDefaultValue(true);
 
-                    b.Property<string>("IdentityUserId")
-                        .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<DateTime>("DataCriacaoUtc")
+                        .HasColumnType("datetime2");
 
-                    b.Property<string>("Nome")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
+                    b.Property<Guid>("EmpresaId")
+                        .HasColumnType("uniqueidentifier");
 
-                    b.Property<byte>("Perfil")
-                        .HasColumnType("tinyint");
+                    b.Property<int>("Escopo")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Perfil")
+                        .HasColumnType("int");
 
                     b.Property<int?>("UnidadeId")
                         .HasColumnType("int");
+
+                    b.Property<string>("UsuarioId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
 
@@ -509,8 +490,9 @@ namespace OsLog.Infrastructure.Migrations
 
                     b.HasIndex("UnidadeId");
 
-                    b.HasIndex("IdentityUserId", "EmpresaId")
-                        .HasDatabaseName("IX_UsuarioAcesso_IdentityUserId_EmpresaId");
+                    b.HasIndex("UsuarioId");
+
+                    b.HasIndex("UsuarioId", "EmpresaId");
 
                     b.ToTable("UsuarioAcesso", "Empresa");
                 });

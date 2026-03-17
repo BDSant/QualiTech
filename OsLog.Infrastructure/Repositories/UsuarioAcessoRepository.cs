@@ -15,7 +15,7 @@ public class UsuarioAcessoRepository : GenericRepository<UsuarioAcesso>, IUsuari
     {
         return await _dbSet
             .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.IdentityUserId == userId && !x.FlAtivo, ct);
+            .FirstOrDefaultAsync(x => x.UsuarioId == userId && !x.Ativo, ct);
     }
 
     public async Task<IReadOnlyCollection<UsuarioAcesso>> ObterListaPorUserIdAsync(string userId, CancellationToken ct = default)
@@ -24,7 +24,7 @@ public class UsuarioAcessoRepository : GenericRepository<UsuarioAcesso>, IUsuari
             .AsNoTracking()
             .Include(x => x.Empresa)
             .Include(x => x.Unidade)
-            .Where(x => x.IdentityUserId == userId && !x.FlAtivo)
+            .Where(x => x.UsuarioId == userId && !x.Ativo)
             .ToListAsync(ct);
     }
 }

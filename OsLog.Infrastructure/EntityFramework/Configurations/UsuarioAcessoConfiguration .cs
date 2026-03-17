@@ -10,44 +10,41 @@ public class UsuarioAcessoConfiguration : IEntityTypeConfiguration<UsuarioAcesso
     {
         builder.ToTable("UsuarioAcesso", "Empresa");
 
-        builder.HasKey(ua => ua.Id);
+        builder.HasKey(x => x.Id);
 
-        builder.Property(x => x.Nome)
-            .HasMaxLength(150)
+        builder.Property(x => x.UsuarioId)
+            .IsRequired()
+            .HasMaxLength(450);
+
+        builder.Property(x => x.Escopo)
+            .HasConversion<int>()
             .IsRequired();
 
-        builder.Property(x => x.Email)
-            .HasMaxLength(150)
+        builder.Property(x => x.Perfil)
+            .HasConversion<int>()
             .IsRequired();
 
-        builder.Property(ua => ua.IdentityUserId)
-            .HasMaxLength(450)
-            .IsRequired();
-
-        builder.Property(ua => ua.Perfil)
-            .IsRequired();
-
-        builder.Property(ua => ua.FlAtivo)
+        builder.Property(x => x.Ativo)
+            .IsRequired()
             .HasDefaultValue(true);
 
-        builder.Property(ua => ua.DataCriacao)
-            .IsRequired();
+        builder.Property(x => x.DataCriacaoUtc)
+            .IsRequired()
+            .HasColumnType("datetime2");
 
-        builder.HasOne(ua => ua.Empresa)
-            .WithMany(e => e.UsuariosAcesso)
-            .HasForeignKey(ua => ua.EmpresaId)
+        builder.HasOne(x => x.Empresa)
+            .WithMany(x => x.UsuariosAcesso)
+            .HasForeignKey(x => x.EmpresaId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasOne(ua => ua.Unidade)
-            .WithMany(u => u.UsuariosAcesso)
-            .HasForeignKey(ua => ua.UnidadeId)
+        builder.HasOne(x => x.Unidade)
+            .WithMany(x => x.UsuariosAcesso)
+            .HasForeignKey(x => x.UnidadeId)
             .OnDelete(DeleteBehavior.NoAction);
 
-        builder.HasIndex(ua => ua.EmpresaId);
-
-        builder.HasIndex(ua => ua.UnidadeId);
-
-        builder.HasIndex(ua => new { ua.IdentityUserId, ua.EmpresaId })
-            .HasDatabaseName("IX_UsuarioAcesso_IdentityUserId_EmpresaId");
+        builder.HasIndex(x => x.UsuarioId);
+        builder.HasIndex(x => x.EmpresaId);
+        builder.HasIndex(x => x.UnidadeId);
+        builder.HasIndex(x => new { x.UsuarioId, x.EmpresaId });
     }
 }

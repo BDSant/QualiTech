@@ -11,8 +11,4 @@ public class EmpresaCreateDto
     [Required(ErrorMessage = "Nome fantasia é obrigatório.")]
     [MaxLength(120, ErrorMessage = "Nome fantasia pode ter no máximo {1} caracteres.")]
     public string NomeFantasia { get; set; } = string.Empty;
-
-    [Required(ErrorMessage = "CNPJ é obrigatório.")]
-    [RegularExpression(@"^\d{14}$", ErrorMessage = "CNPJ deve conter 14 dígitos numéricos (apenas números).")]
-    public string? Cnpj { get; set; }
 }

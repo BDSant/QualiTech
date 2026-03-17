@@ -4,7 +4,7 @@ namespace OsLog.Application.Ports.Persistence.Repositories;
 
 public interface IGenericRepository<T> where T : class
 {
-    Task<T?> GetById(int id, CancellationToken ct = default);
+    Task<T?> GetById(Guid id, CancellationToken ct = default);
     Task<IReadOnlyList<T>> GetAll(CancellationToken ct = default);
     Task<IReadOnlyList<T>> GetById(Expression<Func<T, bool>> predicate, CancellationToken ct = default);
 

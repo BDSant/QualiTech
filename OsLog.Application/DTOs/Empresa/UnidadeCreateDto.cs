@@ -10,7 +10,7 @@ public class UnidadeCreateDto
 
     [Required(ErrorMessage = "CNPJ é obrigatório.")]
     [RegularExpression(@"^\d{14}$", ErrorMessage = "CNPJ deve conter 14 dígitos numéricos (apenas números).")]
-    public string? Cnpj { get; set; }
+    public string Cnpj { get; set; } = string.Empty;
 
     public string? InscricaoEstadual { get; set; }
     public string? InscricaoMunicipal { get; set; }

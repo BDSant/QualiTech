@@ -36,7 +36,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="EntityFramework\Entities\" />
+    <Folder Include="Migrations\" />
     <Folder Include="Persistence\" />
   </ItemGroup>
 

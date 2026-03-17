@@ -17,16 +17,14 @@ public class EmpresaService : IEmpresaService
         _mapper = mapper;
     }
 
-    public async Task<int> Create(EmpresaCreateDto dto, int usuarioId, CancellationToken ct)
+    public async Task<Guid> Create(EmpresaCreateDto dto, int usuarioId, CancellationToken ct)
     {
         var empresa = new Empresa
         {
             RazaoSocial = dto.RazaoSocial,
             NomeFantasia = dto.NomeFantasia,
-            Cnpj = dto.Cnpj,
-            DataCriacao = DateTime.UtcNow,
-            AlteradoPor = usuarioId,
-            FlExcluido = false
+            DataCriacaoUtc = DateTime.UtcNow,
+            Ativa = false
         };
 
         await _UnitOfWork.Empresas.AddAsync(empresa, ct);
@@ -35,10 +33,8 @@ public class EmpresaService : IEmpresaService
         {
             Empresa = empresa,
             Nome = "Matriz",
-            Cnpj = dto.Cnpj,
-            DataCriacao = DateTime.UtcNow,
-            AlteradoPor = usuarioId,
-            FlExcluido = false
+            DataCriacaoUtc = DateTime.UtcNow,
+            Ativa = true
         };
 
         await _UnitOfWork.Unidades.AddAsync(unidadeMatriz, ct);
@@ -50,28 +46,27 @@ public class EmpresaService : IEmpresaService
 
     public async Task<IReadOnlyList<EmpresaListDto>> GetAll(CancellationToken ct)
     {
-        var empresas = await _UnitOfWork.Empresas.GetById(e => !e.FlExcluido, ct);
+        var empresas = await _UnitOfWork.Empresas.GetById(e => !e.Ativa, ct);
         return _mapper.Map<List<EmpresaListDto>>(empresas);
     }
 
-    public async Task<EmpresaDetailDto?> GetById(int id, CancellationToken ct)
+    public async Task<EmpresaDetailDto?> GetById(Guid id, CancellationToken ct)
     {
         var empresa = await _UnitOfWork.Empresas.GetById(id, ct);
-        if (empresa is null || empresa.FlExcluido)
+        if (empresa is null || empresa.Ativa)
             return null;
 
         return _mapper.Map<EmpresaDetailDto>(empresa);
     }
 
-    public async Task<bool> Delete(int id, int usuarioId, CancellationToken ct)
+    public async Task<bool> Delete(Guid id, int usuarioId, CancellationToken ct)
     {
         var empresa = await _UnitOfWork.Empresas.GetById(id, ct);
-        if (empresa is null || empresa.FlExcluido)
+        if (empresa is null || empresa.Ativa)
             return false;
 
-        empresa.FlExcluido = true;
-        empresa.DataAlteracao = DateTime.UtcNow;
-        empresa.AlteradoPor = usuarioId;
+        empresa.Ativa = true;
+        empresa.DataCriacaoUtc = DateTime.UtcNow;
 
         _UnitOfWork.Empresas.Update(empresa);
         await _UnitOfWork.CommitAsync(ct);

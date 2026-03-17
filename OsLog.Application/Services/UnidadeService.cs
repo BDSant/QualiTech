@@ -17,10 +17,10 @@ public class UnidadeService : IUnidadeService
         _mapper = mapper;
     }
 
-    public async Task<int> Create(int empresaId, UnidadeCreateDto unidadeDto, int usuarioId, CancellationToken ct)
+    public async Task<int> Create(Guid empresaId, UnidadeCreateDto unidadeDto, int usuarioId, CancellationToken ct)
     {
         var empresa = await _UnitOfWork.Empresas.GetById(empresaId, ct);
-        if (empresa is null || empresa.FlExcluido)
+        if (empresa is null || empresa.Ativa)
             throw new InvalidOperationException("Empresa não encontrada ou inativa.");
 
         var unidade = new Unidade
@@ -32,9 +32,8 @@ public class UnidadeService : IUnidadeService
             InscricaoMunicipal = unidadeDto.InscricaoMunicipal,
             Endereco = unidadeDto.Endereco,
             Telefone = unidadeDto.Telefone,
-            DataCriacao = DateTime.UtcNow,
-            AlteradoPor = usuarioId,
-            FlExcluido = false
+            DataCriacaoUtc = DateTime.UtcNow,
+            Ativa = true
         };
 
         await _UnitOfWork.Unidades.AddAsync(unidade, ct);
@@ -49,25 +48,23 @@ public class UnidadeService : IUnidadeService
         return _mapper.Map<List<UnidadeDto>>(unidades);
     }
 
-    public async Task<IReadOnlyList<UnidadeDto>> GetById(int empresaId, CancellationToken ct)
+    public async Task<IReadOnlyList<UnidadeDto>> GetById(Guid empresaId, CancellationToken ct)
     {
         var unidades = await _UnitOfWork.Unidades.GetById(u => u.EmpresaId == empresaId &&
-                                                          !u.FlExcluido, ct);
+                                                          !u.Ativa, ct);
         return _mapper.Map<List<UnidadeDto>>(unidades);
     }
 
-    public async Task<bool> Delete(int empresaId, int unidadeId, int usuarioId, CancellationToken ct)
+    public async Task<bool> Delete(Guid empresaId, int unidadeId, int usuarioId, CancellationToken ct)
     {
         var unidades = await _UnitOfWork.Unidades.GetById(u => u.Id == unidadeId && u.EmpresaId == empresaId, ct);
 
         var unidade = unidades.FirstOrDefault();
 
-        if (unidade is null || unidade.FlExcluido)
+        if (unidade is null || unidade.Ativa)
             return false;
 
-        unidade.FlExcluido = true;
-        unidade.DataAlteracao = DateTime.UtcNow;
-        unidade.AlteradoPor = usuarioId;
+        unidade.Ativa = false;
 
         _UnitOfWork.Unidades.Update(unidade);
         await _UnitOfWork.CommitAsync(ct);

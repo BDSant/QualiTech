@@ -38,13 +38,13 @@ public class ClienteService : IClienteService
                    .ToList();
     }
 
-    public async Task<ClienteDto?> GetByIdAsync(int id, CancellationToken ct)
+    public async Task<ClienteDto?> GetByIdAsync(Guid id, CancellationToken ct)
     {
         var cliente = await _uow.Clientes.GetById(id, ct);
         return cliente == null ? null : _mapper.Map<ClienteDto>(cliente);
     }
 
-    public async Task SoftDeleteAsync(int id, int usuarioId, CancellationToken ct)
+    public async Task SoftDeleteAsync(Guid id, int usuarioId, CancellationToken ct)
     {
         var cliente = await _uow.Clientes.GetById(id, ct)
                       ?? throw new InvalidOperationException("Cliente não encontrado.");

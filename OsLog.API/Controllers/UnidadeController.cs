@@ -17,8 +17,8 @@ public class UnidadeController : ControllerBase
         _unidadeService = unidadeService;
     }
 
-    [HttpPost("{empresaId:int}/unidades")]
-    public async Task<IActionResult> Create(int empresaId, [FromBody] UnidadeCreateDto dto, CancellationToken ct)
+    [HttpPost("{empresaId:guid}/unidades")]
+    public async Task<IActionResult> Create(Guid empresaId, [FromBody] UnidadeCreateDto dto, CancellationToken ct)
     {
         if (!ModelState.IsValid)
             return this.ValidationProblemOsLog(ModelState);
@@ -61,8 +61,8 @@ public class UnidadeController : ControllerBase
         );
     }
 
-    [HttpGet("{empresaId:int}/unidades")]
-    public async Task<IActionResult> GetById(int empresaId, CancellationToken ct)
+    [HttpGet("{empresaId:guid}/unidades")]
+    public async Task<IActionResult> GetById(Guid empresaId, CancellationToken ct)
     {
         var unidades = await _unidadeService.GetById(empresaId, ct);
 
@@ -83,8 +83,8 @@ public class UnidadeController : ControllerBase
         );
     }
 
-    [HttpDelete("{empresaId:int}/{unidadeId:int}")]
-    public async Task<IActionResult> Delete(int empresaId, int unidadeId, CancellationToken ct)
+    [HttpDelete("{empresaId:guid}/{unidadeId:guid}")]
+    public async Task<IActionResult> Delete(Guid empresaId, int unidadeId, CancellationToken ct)
     {
         var usuarioId = 1; // TODO: pegar do usuário logado
 

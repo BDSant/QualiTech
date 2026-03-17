@@ -16,7 +16,7 @@ public class GenericRepository<T> : IGenericRepository<T> where T : class
         _dbSet = context.Set<T>();
     }
 
-    public virtual async Task<T?> GetById(int id, CancellationToken ct = default)
+    public virtual async Task<T?> GetById(Guid id, CancellationToken ct = default)
         => await _dbSet.FindAsync(new object?[] { id }, ct);
 
     public virtual async Task<IReadOnlyList<T>> GetAll(CancellationToken ct = default)

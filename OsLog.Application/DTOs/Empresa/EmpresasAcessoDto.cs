@@ -1,4 +1,4 @@
-﻿using OsLog.Domain.Enums.Empresa;
+﻿using OsLog.Domain.Enums;
 
 namespace OsLog.Application.DTOs.Empresa;
 
@@ -6,12 +6,12 @@ public class UnidadeAcessoDto
 {
     public int UnidadeId { get; set; }
     public string NomeUnidade { get; set; } = null!;
-    public PerfilAcessoEmpresa Perfil { get; set; }
+    public PerfilAcesso Perfil { get; set; }
 }
 
 public class EmpresaAcessoDto
 {
-    public int EmpresaId { get; set; }
+    public Guid EmpresaId { get; set; }
     public string RazaoSocial { get; set; } = null!;
     public string NomeFantasia { get; set; } = null!;
 
