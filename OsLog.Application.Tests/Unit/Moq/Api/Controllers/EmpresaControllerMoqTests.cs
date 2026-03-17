@@ -182,7 +182,7 @@ public class EmpresaControllerMoqTests
             RazaoSocial = "Empresa A Ltda",
             NomeFantasia = "Empresa A",
             Cnpj = "11111111000111",
-            DataCriacao = new DateTime(2025, 1, 10),
+            DataCriacaoUtc = new DateTime(2025, 1, 10),
             Ativa = true
         };
 

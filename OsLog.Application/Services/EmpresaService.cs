@@ -27,7 +27,7 @@ public class EmpresaService : IEmpresaService
             RazaoSocial = dto.RazaoSocial,
             NomeFantasia = dto.NomeFantasia,
             DataCriacaoUtc = dtaNow,
-            Ativa = false
+            Ativa = true
         };
 
         await _UnitOfWork.Empresas.AddAsync(empresa, ct);

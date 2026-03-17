@@ -10,12 +10,10 @@ public class EmpresaProfile : Profile
     public EmpresaProfile()
     {
         // Empresa -> Listagem
-        CreateMap<Empresa, EmpresaListDto>()
-            .ForMember(d => d.Ativa, opt => opt.MapFrom(s => !s.Ativa));
+        CreateMap<Empresa, EmpresaListDto>();
 
         // Empresa -> Detalhe
-        CreateMap<Empresa, EmpresaDetailDto>()
-            .ForMember(d => d.Ativa, opt => opt.MapFrom(s => !s.Ativa));
+        CreateMap<Empresa, EmpresaDetailDto>();
 
         // Create -> Empresa
         CreateMap<EmpresaCreateDto, Empresa>()

@@ -22,7 +22,7 @@ namespace OsLog.Tests.Unit.Pure.Application.DTOs.Empresa
                 RazaoSocial = "ConsertaSmart ME",
                 NomeFantasia = "ConsertaSmart Centro",
                 Cnpj = "12345678000199",
-                DataCriacao = DateTime.UtcNow,
+                DataCriacaoUtc = DateTime.UtcNow,
                 Ativa = true
             };
         }
