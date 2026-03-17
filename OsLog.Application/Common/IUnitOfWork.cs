@@ -1,4 +1,5 @@
 ﻿using OsLog.Application.Ports.Persistence.Repositories;
+using OsLog.Domain.Interfaces.Repositories;
 
 namespace OsLog.Application.Common;
 

@@ -8,7 +8,7 @@ public class UsuarioAcesso
 
     public string UsuarioId { get; set; } = string.Empty;
 
-    public Guid EmpresaId { get; set; }
+    public Guid? EmpresaId { get; set; }
 
     public int? UnidadeId { get; set; }
 

@@ -35,12 +35,14 @@ public class UsuarioAcessoConfiguration : IEntityTypeConfiguration<UsuarioAcesso
         builder.HasOne(x => x.Empresa)
             .WithMany(x => x.UsuariosAcesso)
             .HasForeignKey(x => x.EmpresaId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Cascade)
+            .IsRequired(false);
 
         builder.HasOne(x => x.Unidade)
             .WithMany(x => x.UsuariosAcesso)
             .HasForeignKey(x => x.UnidadeId)
-            .OnDelete(DeleteBehavior.NoAction);
+            .OnDelete(DeleteBehavior.NoAction)
+            .IsRequired(false);
 
         builder.HasIndex(x => x.UsuarioId);
         builder.HasIndex(x => x.EmpresaId);

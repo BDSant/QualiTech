@@ -11,7 +11,7 @@ public class UnidadeAcessoDto
 
 public class EmpresaAcessoDto
 {
-    public Guid EmpresaId { get; set; }
+    public Guid? EmpresaId { get; set; }
     public string RazaoSocial { get; set; } = null!;
     public string NomeFantasia { get; set; } = null!;
 

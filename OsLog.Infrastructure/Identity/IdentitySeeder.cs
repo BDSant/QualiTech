@@ -1,7 +1,11 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OsLog.Application.Common.Security;
+using OsLog.Domain.Entities;
+using OsLog.Domain.Enums;
+using OsLog.Infrastructure.EntityFramework;
 using System.Security.Claims;
 
 namespace OsLog.Infrastructure.Identity;
@@ -12,15 +16,16 @@ public static class IdentitySeeder
     {
         using var scope = serviceProvider.CreateScope();
 
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
         await EnsureRoleExistsAsync(roleManager, "Master");
-        await EnsureRoleExistsAsync(roleManager, "Admin");
 
         var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
         var adminEmail = config["IdentitySeed:MasterEmail"] ?? "master@oslog.local";
         var adminPassword = config["IdentitySeed:MasterPassword"] ?? "Master@123456";
 
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         var adminUser = await userManager.FindByEmailAsync(adminEmail);
 
         if (adminUser is null)
@@ -41,11 +46,12 @@ public static class IdentitySeeder
         }
 
         await EnsureUserInRoleAsync(userManager, adminUser, "Master");
-        await EnsureUserInRoleAsync(userManager, adminUser, "Admin");
 
         await EnsureClaimAsync(userManager, adminUser, "permissao", Permissions.Empresa.Criar);
         await EnsureClaimAsync(userManager, adminUser, "permissao", Permissions.Empresa.Consultar);
         await EnsureClaimAsync(userManager, adminUser, "permissao", Permissions.Empresa.Excluir);
+
+        await EnsureUsuarioAcessoPlataformaAsync(dbContext, adminUser.Id);
     }
 
     private static async Task EnsureRoleExistsAsync(
@@ -104,5 +110,31 @@ public static class IdentitySeeder
             throw new InvalidOperationException(
                 $"Erro ao adicionar claim '{claimType}={claimValue}' ao usuário '{user.Email}': {errors}");
         }
+    }
+
+    private static async Task EnsureUsuarioAcessoPlataformaAsync(
+        AppDbContext dbContext,
+        string usuarioId)
+    {
+        var exists = await dbContext.UsuariosAcessos
+            .AsNoTracking()
+            .AnyAsync(x => x.UsuarioId == usuarioId && x.Ativo);
+
+        if (exists)
+            return;
+
+        var usuarioAcesso = new UsuarioAcesso
+        {
+            UsuarioId = usuarioId,
+            EmpresaId = null,
+            UnidadeId = null,
+            Escopo = EscopoAcesso.Plataforma,
+            Perfil = PerfilAcesso.Administrador,
+            Ativo = true,
+            DataCriacaoUtc = DateTime.UtcNow
+        };
+
+        await dbContext.UsuariosAcessos.AddAsync(usuarioAcesso);
+        await dbContext.SaveChangesAsync();
     }
 }

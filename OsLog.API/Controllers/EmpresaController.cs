@@ -30,6 +30,19 @@ public class EmpresaController : BaseApiController
     [ProducesResponseType(typeof(OsLogResponse), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Create([FromBody] EmpresaCreateDto dto, CancellationToken ct)
     {
+        if (HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>().IsDevelopment())
+        {
+            dto.RazaoSocial = string.IsNullOrWhiteSpace(dto.RazaoSocial) ? "Carlos Assistência Técnica Ltda" : dto.RazaoSocial;
+            dto.NomeFantasia = string.IsNullOrWhiteSpace(dto.NomeFantasia) ? "Carlos Assistência" : dto.NomeFantasia;
+            dto.CnpjMatriz = string.IsNullOrWhiteSpace(dto.CnpjMatriz) ? "12.345.678/0001-90" : dto.CnpjMatriz;
+            dto.InscricaoEstadualMatriz ??= "123456789";
+            dto.InscricaoMunicipalMatriz ??= "987654321";
+            dto.EnderecoMatriz ??= "Rua das Oficinas, 100 - Centro";
+            dto.TelefoneMatriz ??= "(11) 99999-9999";
+        }
+
+
+
         if (!ModelState.IsValid)
             return this.ValidationProblemOsLog(ModelState);
 

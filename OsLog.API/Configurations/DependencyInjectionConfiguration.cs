@@ -11,6 +11,7 @@ using OsLog.Application.UseCases.Autenticacao.Logout;
 using OsLog.Application.UseCases.Autenticacao.RefreshToken;
 using OsLog.Application.UseCases.Autenticacao.ResetPassword;
 using OsLog.Application.UseCases.Users;
+using OsLog.Domain.Interfaces.Repositories;
 using OsLog.Infrastructure.Identity;
 using OsLog.Infrastructure.Identity.Gateway;
 using OsLog.Infrastructure.Identity.Runtime;

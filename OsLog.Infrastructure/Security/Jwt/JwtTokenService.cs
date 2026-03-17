@@ -66,7 +66,13 @@ public sealed class JwtTokenService : IJwtTokenService
         };
 
         if (additionalClaims is not null)
-            claims.AddRange(additionalClaims);
+        {
+            foreach (var c in additionalClaims)
+            {
+                if (!claims.Any(x => x.Type == c.Type && x.Value == c.Value))
+                    claims.Add(c);
+            }
+        }
 
         return GenerateTokensInternalAsync(
             userId,

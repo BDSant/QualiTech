@@ -2,7 +2,8 @@
 
 public enum PerfilAcesso : byte
 {
-    Propeietario = 1,
+    Administrador = 0,
+    Propeietario,
     Financeiro,
     Gerente,
     Tecnico,
