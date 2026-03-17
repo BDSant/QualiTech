@@ -34,7 +34,7 @@ public class EmpresaController : BaseApiController
             return this.ValidationProblemOsLog(ModelState);
 
         var usuarioId = ObterUsuarioId();
-        if (!usuarioId.HasValue)
+        if (string.IsNullOrWhiteSpace(usuarioId))
         {
             return Unauthorized(
                 OsLogResponse.Critica(
@@ -42,7 +42,7 @@ public class EmpresaController : BaseApiController
                     mensagem: CriticasOsLog.RetornaCritica(CodigosOsLog.USUARIO_NAO_AUTENTICADO)));
         }
 
-        var id = await _empresaService.Create(dto, usuarioId.Value, ct);
+        var id = await _empresaService.Create(dto, usuarioId, ct);
 
         var versao = HttpContext.GetRequestedApiVersion()?.ToString() ?? "1.0";
 
@@ -109,7 +109,7 @@ public class EmpresaController : BaseApiController
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         var usuarioId = ObterUsuarioId();
-        if (!usuarioId.HasValue)
+        if (string.IsNullOrWhiteSpace(usuarioId))
         {
             return Unauthorized(
                 OsLogResponse.Critica(
@@ -117,7 +117,7 @@ public class EmpresaController : BaseApiController
                     mensagem: CriticasOsLog.RetornaCritica(CodigosOsLog.USUARIO_NAO_AUTENTICADO)));
         }
 
-        var ok = await _empresaService.Delete(id, usuarioId.Value, ct);
+        var ok = await _empresaService.Delete(id, usuarioId, ct);
         if (!ok)
         {
             return NotFound(

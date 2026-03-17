@@ -11,4 +11,20 @@ public class EmpresaCreateDto
     [Required(ErrorMessage = "Nome fantasia é obrigatório.")]
     [MaxLength(120, ErrorMessage = "Nome fantasia pode ter no máximo {1} caracteres.")]
     public string NomeFantasia { get; set; } = string.Empty;
+
+    [Required]
+    [MaxLength(18)]
+    public string CnpjMatriz { get; set; } = string.Empty;
+
+    [MaxLength(50)]
+    public string? InscricaoEstadualMatriz { get; set; }
+
+    [MaxLength(50)]
+    public string? InscricaoMunicipalMatriz { get; set; }
+
+    [MaxLength(300)]
+    public string? EnderecoMatriz { get; set; }
+
+    [MaxLength(50)]
+    public string? TelefoneMatriz { get; set; }
 }
