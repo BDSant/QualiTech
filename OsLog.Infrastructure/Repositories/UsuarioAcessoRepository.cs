@@ -13,6 +13,9 @@ public class UsuarioAcessoRepository : GenericRepository<UsuarioAcesso>, IUsuari
 
     public async Task<UsuarioAcesso?> ObterPorUserIdAsync(string userId, CancellationToken ct = default)
     {
+        var teste = await _dbSet.AsNoTracking().ToListAsync(ct);
+
+
         return await _dbSet
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.UsuarioId == userId && !x.Ativo, ct);
