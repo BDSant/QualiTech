@@ -12,9 +12,7 @@ public static class IdentitySeeder
     {
         using var scope = serviceProvider.CreateScope();
 
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-
         await EnsureRoleExistsAsync(roleManager, "Master");
         await EnsureRoleExistsAsync(roleManager, "Admin");
 
@@ -22,6 +20,7 @@ public static class IdentitySeeder
         var adminEmail = config["IdentitySeed:MasterEmail"] ?? "master@oslog.local";
         var adminPassword = config["IdentitySeed:MasterPassword"] ?? "Master@123456";
 
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         var adminUser = await userManager.FindByEmailAsync(adminEmail);
 
         if (adminUser is null)

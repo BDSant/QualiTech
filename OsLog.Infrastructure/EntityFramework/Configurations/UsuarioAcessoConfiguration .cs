@@ -24,32 +24,30 @@ public class UsuarioAcessoConfiguration : IEntityTypeConfiguration<UsuarioAcesso
             .HasMaxLength(450)
             .IsRequired();
 
-        builder.HasIndex(x => x.IdentityUserId)
-            .IsUnique();
-
         builder.Property(ua => ua.Perfil)
             .IsRequired();
 
         builder.Property(ua => ua.FlAtivo)
-            .HasDefaultValue(false);
+            .HasDefaultValue(true);
 
         builder.Property(ua => ua.DataCriacao)
             .IsRequired();
 
-        // Relacionamento com Empresa
         builder.HasOne(ua => ua.Empresa)
             .WithMany(e => e.UsuariosAcesso)
             .HasForeignKey(ua => ua.EmpresaId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Relacionamento com Unidade (opcional)
         builder.HasOne(ua => ua.Unidade)
             .WithMany(u => u.UsuariosAcesso)
             .HasForeignKey(ua => ua.UnidadeId)
             .OnDelete(DeleteBehavior.NoAction);
 
-        // Índices úteis (opcional mas recomendável)
-        builder.HasIndex(ua => ua.IdentityUserId);
-        builder.HasIndex(ua => new { ua.IdentityUserId, ua.EmpresaId });
+        builder.HasIndex(ua => ua.EmpresaId);
+
+        builder.HasIndex(ua => ua.UnidadeId);
+
+        builder.HasIndex(ua => new { ua.IdentityUserId, ua.EmpresaId })
+            .HasDatabaseName("IX_UsuarioAcesso_IdentityUserId_EmpresaId");
     }
 }
