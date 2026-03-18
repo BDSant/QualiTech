@@ -35,7 +35,7 @@ public class EmpresaService : IEmpresaService
 
         var unidadeMatriz = new Unidade
         {
-            EmpresaId = empresa.Id,
+            //EmpresaId = empresa.Id,
             Nome = "Matriz",
             Cnpj = dto.CnpjMatriz,
             InscricaoEstadual = dto.InscricaoEstadualMatriz,

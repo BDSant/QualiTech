@@ -25,7 +25,8 @@ public abstract class BaseApiController : ControllerBase
 
     protected string? ObterUsuarioId()
     {
-        return User.FindFirstValue("sub");
+        return User.FindFirstValue(ClaimTypes.NameIdentifier)
+               ?? User.FindFirstValue("sub");
     }
 
     private IActionResult BuildErrorResponse(IReadOnlyList<AppError> errors)

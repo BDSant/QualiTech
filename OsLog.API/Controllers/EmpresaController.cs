@@ -61,7 +61,7 @@ public class EmpresaController : BaseApiController
 
         return CreatedAtAction(
             nameof(GetById),
-            new { version = versao, id },
+            new { version = versao, id},
             OsLogResponse<Guid>.Ok(
                 dados: id,
                 mensagem: "Empresa criada com sucesso."));
@@ -90,7 +90,7 @@ public class EmpresaController : BaseApiController
                 mensagem: "Empresas retornadas com sucesso."));
     }
 
-    [HttpGet("{id:int}")]
+    [HttpGet("{id:guid}")]
     [Authorize(Policy = "empresa.consultar")]
     [ProducesResponseType(typeof(OsLogResponse<EmpresaDetailDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(OsLogResponse), StatusCodes.Status404NotFound)]
@@ -113,7 +113,7 @@ public class EmpresaController : BaseApiController
                 mensagem: "Empresa encontrada."));
     }
 
-    [HttpDelete("{id:int}")]
+    [HttpDelete("{id:guid}")]
     [Authorize(Policy = "empresa.excluir")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(OsLogResponse), StatusCodes.Status401Unauthorized)]

@@ -13,7 +13,8 @@ public class EmpresaConfiguration : IEntityTypeConfiguration<Empresa>
         builder.HasKey(e => e.Id);
 
         builder.Property(e => e.Id)
-            .ValueGeneratedNever();
+            .ValueGeneratedOnAdd()
+            .HasDefaultValueSql("NEWSEQUENTIALID()");
 
         builder.Property(e => e.RazaoSocial)
             .IsRequired()
