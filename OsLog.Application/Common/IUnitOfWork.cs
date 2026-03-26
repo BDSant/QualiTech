@@ -13,12 +13,9 @@ public interface IUnitOfWork : IAsyncDisposable
     IUnidadeRepository Unidades { get; }
     IUsuarioAcessoRepository UsuarioAcessos { get; }
 
-    //IOrdemServicoRepository OrdensServico { get; }
-    //IOrcamentoItemRepository OrcamentoItens { get; }
-    //IOrdemServicoAcessorioRepository Acessorios { get; }
-    //IOrdemServicoFotoRepository Fotos { get; }
-    //IOrdemServicoComissaoRepository Comissoes { get; }
-
-    Task<int> CommitAsync(CancellationToken ct = default);
+    Task BeginTransactionAsync(CancellationToken ct = default);
+    Task<int> SaveChangesAsync(CancellationToken ct = default);
+    Task CommitAsync(CancellationToken ct = default);
+    Task RollbackAsync(CancellationToken ct = default);
 }
 

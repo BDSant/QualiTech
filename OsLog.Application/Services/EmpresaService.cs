@@ -22,6 +22,8 @@ public class EmpresaService : IEmpresaService
     {
         var dtaNow = DateTime.UtcNow;
 
+        await _UnitOfWork.BeginTransactionAsync(ct);
+
         var empresa = new Empresa
         {
             RazaoSocial = dto.RazaoSocial,
@@ -31,11 +33,12 @@ public class EmpresaService : IEmpresaService
         };
 
         await _UnitOfWork.Empresas.AddAsync(empresa, ct);
+        await _UnitOfWork.SaveChangesAsync();
 
 
         var unidadeMatriz = new Unidade
         {
-            //EmpresaId = empresa.Id,
+            EmpresaId = empresa.Id,
             Nome = "Matriz",
             Cnpj = dto.CnpjMatriz,
             InscricaoEstadual = dto.InscricaoEstadualMatriz,
@@ -56,14 +59,12 @@ public class EmpresaService : IEmpresaService
             EmpresaId = empresa.Id,
             UnidadeId = null,
             Escopo = EscopoAcesso.Empresa,
-            Perfil = PerfilAcesso.Propeietario,
+            Perfil = PerfilAcesso.Proprietario,
             Ativo = true,
             DataCriacaoUtc = dtaNow
         };
 
         await _UnitOfWork.UsuarioAcessos.AddAsync(usuarioAcesso, ct);
-
-
         await _UnitOfWork.CommitAsync(ct);
 
         return empresa.Id;

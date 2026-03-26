@@ -1,4 +1,5 @@
-﻿using OsLog.Application.Common;
+﻿using Microsoft.EntityFrameworkCore.Storage;
+using OsLog.Application.Common;
 using OsLog.Application.Ports.Persistence.Repositories;
 using OsLog.Domain.Interfaces.Repositories;
 using OsLog.Infrastructure.EntityFramework;
@@ -8,6 +9,7 @@ namespace OsLog.Infrastructure.UnitOfWork;
 public class UnitOfWork : IUnitOfWork
 {
     private readonly AppDbContext _context;
+    private IDbContextTransaction? _transaction;
 
     public UnitOfWork(
         AppDbContext context,
@@ -40,9 +42,54 @@ public class UnitOfWork : IUnitOfWork
     public IUnidadeRepository Unidades { get; }
     public IUsuarioAcessoRepository UsuarioAcessos { get; }
 
-    public async Task<int> CommitAsync(CancellationToken ct = default)
-        => await _context.SaveChangesAsync(ct);
+    public async Task BeginTransactionAsync(CancellationToken ct = default)
+    {
+        if (_transaction is not null)
+            return;
 
-    public ValueTask DisposeAsync()
-        => _context.DisposeAsync();
+        _transaction = await _context.Database.BeginTransactionAsync(ct);
+    }
+
+    public async Task<int> SaveChangesAsync(CancellationToken ct = default)
+    {
+        return await _context.SaveChangesAsync(ct);
+    }
+
+    public async Task CommitAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            await _context.SaveChangesAsync(ct);
+
+            if (_transaction is not null)
+            {
+                await _transaction.CommitAsync(ct);
+                await _transaction.DisposeAsync();
+                _transaction = null;
+            }
+        }
+        catch
+        {
+            if (_transaction is not null)
+            {
+                await _transaction.RollbackAsync(ct);
+                await _transaction.DisposeAsync();
+                _transaction = null;
+            }
+
+            throw;
+        }
+    }
+
+    public async Task RollbackAsync(CancellationToken ct = default)
+    {
+        if (_transaction is not null)
+        {
+            await _transaction.RollbackAsync(ct);
+            await _transaction.DisposeAsync();
+            _transaction = null;
+        }
+    }
+
+    public ValueTask DisposeAsync() => _context.DisposeAsync();
 }
