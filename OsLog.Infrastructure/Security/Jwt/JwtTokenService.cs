@@ -4,9 +4,9 @@ using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using NetDevPack.Security.Jwt.Core.Interfaces;
 using OsLog.Application.Common.Security.Jwt;
-using OsLog.Application.DTOs.Auth;
 using OsLog.Application.Ports.ApplicationServices;
 using OsLog.Application.Ports.Security;
+using OsLog.Application.UseCases.Autenticacao.Common;
 using OsLog.Infrastructure.Identity;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -36,7 +36,7 @@ public sealed class JwtTokenService : IJwtTokenService
         _userManager = userManager;
     }
 
-    public Task<TokenResponseDto> GenerateTokensAsync(
+    public Task<TokenResponse> GenerateTokensAsync(
         string userId,
         string email,
         IEnumerable<string> roles,
@@ -52,7 +52,7 @@ public sealed class JwtTokenService : IJwtTokenService
             ct);
     }
 
-    public Task<TokenResponseDto> GenerateTokensAsync(
+    public Task<TokenResponse> GenerateTokensAsync(
         string userId,
         string email,
         IEnumerable<string> roles,
@@ -83,7 +83,7 @@ public sealed class JwtTokenService : IJwtTokenService
             ct);
     }
 
-    public async Task<TokenResponseDto> RefreshAsync(
+    public async Task<TokenResponse> RefreshAsync(
         string refreshToken,
         CancellationToken ct = default)
     {
@@ -119,7 +119,7 @@ public sealed class JwtTokenService : IJwtTokenService
         await _refreshTokenStore.RevokeByHashAsync(hash, ct);
     }
 
-    private async Task<TokenResponseDto> GenerateTokensInternalAsync(
+    private async Task<TokenResponse> GenerateTokensInternalAsync(
         string userId,
         string email,
         IEnumerable<string> roles,
@@ -173,7 +173,7 @@ public sealed class JwtTokenService : IJwtTokenService
         if (rotateFromRefreshTokenId.HasValue)
             await _refreshTokenStore.RevokeAsync(rotateFromRefreshTokenId.Value, refreshHash, ct);
 
-        return new TokenResponseDto
+        return new TokenResponse
         {
             AccessToken = accessToken,
             ExpiresAtUtc = descriptor.Expires!.Value.ToUniversalTime(),

@@ -1,8 +1,8 @@
 using OsLog.Application.Common.Result;
 using OsLog.Application.Common.Security.ErrorCodes;
-using OsLog.Application.DTOs.Auth;
 using OsLog.Application.Ports.Identity.Runtime;
 using OsLog.Application.Ports.Security;
+using OsLog.Application.UseCases.Autenticacao.Common;
 
 namespace OsLog.Application.UseCases.Autenticacao.Login;
 
@@ -22,13 +22,13 @@ public sealed class LoginUseCase : ILoginUseCase
         _usuarioAutenticadoResolver = usuarioAutenticadoResolver;
     }
 
-    public async Task<Result<TokenResponseDto>> ExecuteAsync(
+    public async Task<Result<TokenResponse>> ExecuteAsync(
         LoginRequest request,
         CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(request.Email))
         {
-            return (Result<TokenResponseDto>)Result.Fail(new AppError(
+            return (Result<TokenResponse>)Result.Fail(new AppError(
                 AuthErrorCodes.EmailRequired,
                 "E-mail é obrigatório.",
                 ErrorType.Validation,
@@ -37,7 +37,7 @@ public sealed class LoginUseCase : ILoginUseCase
 
         if (string.IsNullOrWhiteSpace(request.Senha))
         {
-            return (Result<TokenResponseDto>)Result.Fail(new AppError(
+            return (Result<TokenResponse>)Result.Fail(new AppError(
                 AuthErrorCodes.PasswordRequired,
                 "Senha é obrigatória.",
                 ErrorType.Validation,
@@ -48,7 +48,7 @@ public sealed class LoginUseCase : ILoginUseCase
 
         if (user is null)
         {
-            return (Result<TokenResponseDto>)Result.Fail(new AppError(
+            return (Result<TokenResponse>)Result.Fail(new AppError(
                 AuthErrorCodes.InvalidCredentials,
                 "Usuário ou senha inválidos.",
                 ErrorType.Unauthorized));
@@ -61,7 +61,7 @@ public sealed class LoginUseCase : ILoginUseCase
 
         if (!ok)
         {
-            return (Result<TokenResponseDto>)Result.Fail(new AppError(
+            return (Result<TokenResponse>)Result.Fail(new AppError(
                 AuthErrorCodes.InvalidCredentials,
                 "Usuário ou senha inválidos.",
                 ErrorType.Unauthorized));
@@ -85,7 +85,7 @@ public sealed class LoginUseCase : ILoginUseCase
 
         if (!usuarioId.HasValue)
         {
-            return (Result<TokenResponseDto>)Result.Fail(new AppError(
+            return (Result<TokenResponse>)Result.Fail(new AppError(
                 AuthErrorCodes.InvalidCredentials,
                 "Usuário autenticado sem vínculo com o cadastro interno de acesso.",
                 ErrorType.Unauthorized));
@@ -102,6 +102,6 @@ public sealed class LoginUseCase : ILoginUseCase
             claims,
             ct);
 
-        return Result<TokenResponseDto>.Ok(tokens);
+        return Result<TokenResponse>.Ok(tokens);
     }
 }

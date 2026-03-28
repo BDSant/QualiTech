@@ -1,5 +1,5 @@
-﻿using OsLog.Application.DTOs.Auth;
-using OsLog.Application.DTOs.Users;
+﻿using OsLog.Application.DTOs.Users;
+using OsLog.Application.UseCases.Autenticacao.Common;
 using OsLog.Application.UseCases.Autenticacao.Login;
 using OsLog.Tests.Shared.Factories;
 using System.Net;
@@ -36,7 +36,7 @@ public sealed class UsuariosControllerIntegrationTests : IClassFixture<OsLogApiF
 
         response.EnsureSuccessStatusCode();
 
-        var token = await response.Content.ReadFromJsonAsync<TokenResponseDto>();
+        var token = await response.Content.ReadFromJsonAsync<TokenResponse>();
         Assert.NotNull(token);
         Assert.False(string.IsNullOrWhiteSpace(token!.AccessToken));
 

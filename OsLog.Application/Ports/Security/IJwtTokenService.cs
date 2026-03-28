@@ -1,18 +1,18 @@
 using System.Security.Claims;
-using OsLog.Application.DTOs.Auth;
+using OsLog.Application.UseCases.Autenticacao.Common;
 
 namespace OsLog.Application.Ports.Security;
 
 public interface IJwtTokenService
 {
-    Task<TokenResponseDto> GenerateTokensAsync(
+    Task<TokenResponse> GenerateTokensAsync(
         string userId,
         string email,
         IEnumerable<string> roles,
         IEnumerable<Claim>? additionalClaims = null,
         CancellationToken ct = default);
 
-    Task<TokenResponseDto> GenerateTokensAsync(
+    Task<TokenResponse> GenerateTokensAsync(
         string userId,
         string email,
         IEnumerable<string> roles,
@@ -20,7 +20,7 @@ public interface IJwtTokenService
         IEnumerable<Claim>? additionalClaims = null,
         CancellationToken ct = default);
 
-    Task<TokenResponseDto> RefreshAsync(
+    Task<TokenResponse> RefreshAsync(
         string refreshToken,
         CancellationToken ct = default);
 

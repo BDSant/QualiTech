@@ -1,6 +1,6 @@
-﻿namespace OsLog.Application.DTOs.Auth;
+﻿namespace OsLog.Application.UseCases.Autenticacao.Common;
 
-public class TokenResponseDto
+public class TokenResponse
 {
     public string AccessToken { get; set; } = string.Empty;
     public DateTime ExpiresAtUtc { get; set; }
