@@ -71,7 +71,16 @@ public class EmpresaController : BaseApiController
     [ProducesResponseType(typeof(OsLogResponse), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetAll(CancellationToken ct)
     {
-        var lista = await _empresaService.GetAll(ct);
+        var usuarioId = ObterUsuarioId();
+        if (string.IsNullOrWhiteSpace(usuarioId))
+        {
+            return Unauthorized(
+                OsLogResponse.Critica(
+                    codigo: CodigosOsLog.USUARIO_NAO_AUTENTICADO,
+                    mensagem: CriticasOsLog.RetornaCritica(CodigosOsLog.USUARIO_NAO_AUTENTICADO)));
+        }
+
+        var lista = await _empresaService.GetAll(usuarioId, ct);
 
         if (lista.Count <= 0)
         {
@@ -86,7 +95,7 @@ public class EmpresaController : BaseApiController
                 dados: lista,
                 mensagem: "Empresas retornadas com sucesso."));
     }
-
+    
     [HttpGet("{id:guid}")]
     [Authorize(Policy = "empresa.consultar")]
     [ProducesResponseType(typeof(OsLogResponse<EmpresaDetailDto>), StatusCodes.Status200OK)]
@@ -94,7 +103,16 @@ public class EmpresaController : BaseApiController
     [ProducesResponseType(typeof(OsLogResponse), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
     {
-        var empresa = await _empresaService.GetById(id, ct);
+        var usuarioId = ObterUsuarioId();
+        if (string.IsNullOrWhiteSpace(usuarioId))
+        {
+            return Unauthorized(
+                OsLogResponse.Critica(
+                    codigo: CodigosOsLog.USUARIO_NAO_AUTENTICADO,
+                    mensagem: CriticasOsLog.RetornaCritica(CodigosOsLog.USUARIO_NAO_AUTENTICADO)));
+        }
+
+        var empresa = await _empresaService.GetById(id, usuarioId, ct);
 
         if (empresa is null)
         {
@@ -109,7 +127,7 @@ public class EmpresaController : BaseApiController
                 dados: empresa,
                 mensagem: "Empresa encontrada."));
     }
-
+    
     [HttpDelete("{id:guid}")]
     [Authorize(Policy = "empresa.excluir")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

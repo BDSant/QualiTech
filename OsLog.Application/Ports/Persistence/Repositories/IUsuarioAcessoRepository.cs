@@ -1,7 +1,7 @@
 ﻿using OsLog.Application.Ports.Persistence.Repositories;
 using OsLog.Domain.Entities;
 
-namespace OsLog.Domain.Interfaces.Repositories;
+namespace OsLog.Application.Ports.Persistence.Repositories;
 
 public interface IUsuarioAcessoRepository : IGenericRepository<UsuarioAcesso>
 {

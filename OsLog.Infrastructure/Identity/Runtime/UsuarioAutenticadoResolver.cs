@@ -1,5 +1,5 @@
 ﻿using OsLog.Application.Ports.Identity.Runtime;
-using OsLog.Domain.Interfaces.Repositories;
+using OsLog.Application.Ports.Persistence.Repositories;
 
 namespace OsLog.Infrastructure.Identity.Runtime;
 

@@ -16,21 +16,54 @@ public class GenericRepository<T> : IGenericRepository<T> where T : class
         _dbSet = context.Set<T>();
     }
 
-    public virtual async Task<T?> GetById(Guid id, CancellationToken ct = default)
-        => await _dbSet.FindAsync(new object?[] { id }, ct);
+    public virtual async Task<T?> GetByIdAsync(Guid id, CancellationToken ct = default)
+    {
+        return await _dbSet.FindAsync(new object?[] { id }, ct);
+    }
 
-    public virtual async Task<IReadOnlyList<T>> GetAll(CancellationToken ct = default)
-        => await _dbSet.AsNoTracking().ToListAsync(ct);
+    public virtual async Task<T?> GetByIdAsync(int id, CancellationToken ct = default)
+    {
+        return await _dbSet.FindAsync(new object?[] { id }, ct);
+    }
 
-    public virtual async Task<IReadOnlyList<T>> GetById(
+    public virtual async Task<IReadOnlyList<T>> GetAllAsync(CancellationToken ct = default)
+    {
+        return await _dbSet
+            .AsNoTracking()
+            .ToListAsync(ct);
+    }
+
+    public virtual async Task<IReadOnlyList<T>> FindAsync(
         Expression<Func<T, bool>> predicate,
         CancellationToken ct = default)
-        => await _dbSet.AsNoTracking().Where(predicate).ToListAsync(ct);
+    {
+        return await _dbSet
+            .AsNoTracking()
+            .Where(predicate)
+            .ToListAsync(ct);
+    }
+
+    public virtual async Task<T?> GetByPredicateAsync(
+        Expression<Func<T, bool>> predicate,
+        CancellationToken ct = default)
+    {
+        return await _dbSet
+            .AsNoTracking()
+            .FirstOrDefaultAsync(predicate, ct);
+    }
 
     public virtual async Task AddAsync(T entity, CancellationToken ct = default)
-        => await _dbSet.AddAsync(entity, ct);
+    {
+        await _dbSet.AddAsync(entity, ct);
+    }
 
-    public virtual void Update(T entity) => _dbSet.Update(entity);
+    public virtual void Update(T entity)
+    {
+        _dbSet.Update(entity);
+    }
 
-    public virtual void Delete(T entity) => _dbSet.Remove(entity);
+    public virtual void Delete(T entity)
+    {
+        _dbSet.Remove(entity);
+    }
 }

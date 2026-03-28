@@ -32,7 +32,7 @@ public class ClienteService : IClienteService
 
     public async Task<IReadOnlyList<ClienteDto>> ListarAsync(CancellationToken ct)
     {
-        var list = await _uow.Clientes.GetAll(ct);
+        var list = await _uow.Clientes.GetAllAsync(ct);
         return list.Where(c => !c.FlExcluido)
                    .Select(_mapper.Map<ClienteDto>)
                    .ToList();
@@ -40,13 +40,13 @@ public class ClienteService : IClienteService
 
     public async Task<ClienteDto?> GetByIdAsync(Guid id, CancellationToken ct)
     {
-        var cliente = await _uow.Clientes.GetById(id, ct);
+        var cliente = await _uow.Clientes.GetByIdAsync(id, ct);
         return cliente == null ? null : _mapper.Map<ClienteDto>(cliente);
     }
 
     public async Task SoftDeleteAsync(Guid id, int usuarioId, CancellationToken ct)
     {
-        var cliente = await _uow.Clientes.GetById(id, ct)
+        var cliente = await _uow.Clientes.GetByIdAsync(id, ct)
                       ?? throw new InvalidOperationException("Cliente não encontrado.");
 
         if (cliente.FlExcluido) return;

@@ -4,9 +4,12 @@ namespace OsLog.Application.Ports.Persistence.Repositories;
 
 public interface IGenericRepository<T> where T : class
 {
-    Task<T?> GetById(Guid id, CancellationToken ct = default);
-    Task<IReadOnlyList<T>> GetAll(CancellationToken ct = default);
-    Task<IReadOnlyList<T>> GetById(Expression<Func<T, bool>> predicate, CancellationToken ct = default);
+    Task<T?> GetByIdAsync(Guid id, CancellationToken ct = default);
+    Task<T?> GetByIdAsync(int id, CancellationToken ct = default);
+
+    Task<IReadOnlyList<T>> GetAllAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<T>> FindAsync(Expression<Func<T, bool>> predicate, CancellationToken ct = default);
+    Task<T?> GetByPredicateAsync(Expression<Func<T, bool>> predicate, CancellationToken ct = default);
 
     Task AddAsync(T entity, CancellationToken ct = default);
     void Update(T entity);

@@ -11,7 +11,6 @@ using OsLog.Application.UseCases.Autenticacao.Logout;
 using OsLog.Application.UseCases.Autenticacao.RefreshToken;
 using OsLog.Application.UseCases.Autenticacao.ResetPassword;
 using OsLog.Application.UseCases.Users;
-using OsLog.Domain.Interfaces.Repositories;
 using OsLog.Infrastructure.Identity;
 using OsLog.Infrastructure.Identity.Gateway;
 using OsLog.Infrastructure.Identity.Runtime;
@@ -23,13 +22,6 @@ namespace OsLog.API.Configurations;
 
 public static class DependencyInjectionConfiguration
 {
-    /// <summary>
-    /// Registra as dependências da aplicação, incluindo repositórios,
-    /// serviços, gateways, casos de uso e unidade de trabalho.
-    /// </summary>
-    /// <param name="services">Coleção de serviços utilizada para registrar as dependências da aplicação.</param>
-    /// <returns>A própria coleção de serviços, permitindo o encadeamento das configurações.</returns>
-
     public static IServiceCollection AddDependencyInjectionConfiguration(this IServiceCollection services)
     {
         services.AddRepositories();
@@ -64,12 +56,12 @@ public static class DependencyInjectionConfiguration
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IIdentityGateway, IdentityGateway>();
         services.AddScoped<IUsuarioAutenticadoResolver, UsuarioAutenticadoResolver>();
+        services.AddScoped<IIdentityAdminGateway, IdentityAdminGateway>();
 
         services.AddScoped<IEmpresaService, EmpresaService>();
+        services.AddScoped<IUnidadeService, UnidadeService>();
         services.AddScoped<IClienteService, ClienteService>();
         services.AddScoped<ITecnicoService, TecnicoService>();
-        services.AddScoped<IUnidadeService, UnidadeService>();
-        services.AddScoped<IIdentityAdminGateway, IdentityAdminGateway>();
 
         return services;
     }

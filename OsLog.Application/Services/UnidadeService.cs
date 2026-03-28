@@ -3,75 +3,111 @@ using OsLog.Application.Common;
 using OsLog.Application.DTOs.Unidade;
 using OsLog.Application.Ports.ApplicationServices;
 using OsLog.Domain.Entities;
+using OsLog.Domain.Enums;
 
 namespace OsLog.Application.Services;
 
 public class UnidadeService : IUnidadeService
 {
-    private readonly IUnitOfWork _UnitOfWork;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
 
-    public UnidadeService(IUnitOfWork uow, IMapper mapper)
+    public UnidadeService(
+        IUnitOfWork unitOfWork,
+        IMapper mapper)
     {
-        _UnitOfWork = uow;
+        _unitOfWork = unitOfWork;
         _mapper = mapper;
     }
 
-    public async Task<int> Create(Guid empresaId, UnidadeCreateDto unidadeDto, int usuarioId, CancellationToken ct)
+    public async Task<int> Create(Guid empresaId, UnidadeCreateDto dto, CancellationToken ct)
     {
-        var empresa = await _UnitOfWork.Empresas.GetById(empresaId, ct);
-        if (empresa is null || empresa.Ativa)
-            throw new InvalidOperationException("Empresa não encontrada ou inativa.");
+        await _unitOfWork.BeginTransactionAsync(ct);
 
-        var unidade = new Unidade
+        try
         {
-            EmpresaId = empresaId,
-            Nome = unidadeDto.Nome,
-            Cnpj = unidadeDto.Cnpj,
-            InscricaoEstadual = unidadeDto.InscricaoEstadual,
-            InscricaoMunicipal = unidadeDto.InscricaoMunicipal,
-            Endereco = unidadeDto.Endereco,
-            Telefone = unidadeDto.Telefone,
-            DataCriacaoUtc = DateTime.UtcNow,
-            Ativa = true
-        };
+            var empresa = await _unitOfWork.Empresas.GetByPredicateAsync(
+                e => e.Id == empresaId && e.Ativa,
+                ct);
 
-        await _UnitOfWork.Unidades.AddAsync(unidade, ct);
-        await _UnitOfWork.CommitAsync(ct);
+            if (empresa is null)
+            {
+                await _unitOfWork.RollbackAsync(ct);
+                return 0;
+            }
 
-        return unidade.Id;
+            var unidade = _mapper.Map<Unidade>(dto);
+
+            unidade.EmpresaId = empresaId;
+            unidade.Tipo = TipoUnidade.Filial;
+            unidade.Ativa = true;
+            unidade.DataCriacaoUtc = DateTime.UtcNow;
+
+            await _unitOfWork.Unidades.AddAsync(unidade, ct);
+            await _unitOfWork.SaveChangesAsync(ct);
+
+            await _unitOfWork.CommitAsync(ct);
+
+            return unidade.Id;
+        }
+        catch
+        {
+            await _unitOfWork.RollbackAsync(ct);
+            throw;
+        }
     }
 
-    public async Task<IReadOnlyList<UnidadeDto>> GetAll(CancellationToken ct)
+    public async Task<IReadOnlyList<UnidadeDto>> GetAllByEmpresa(Guid empresaId, CancellationToken ct)
     {
-        var unidades = await _UnitOfWork.Unidades.GetAll(ct);
-        return _mapper.Map<List<UnidadeDto>>(unidades);
+        var unidades = await _unitOfWork.Unidades.FindAsync(
+            u => u.EmpresaId == empresaId && u.Ativa,
+            ct);
+
+        return _mapper.Map<IReadOnlyList<UnidadeDto>>(unidades);
     }
 
-    public async Task<IReadOnlyList<UnidadeDto>> GetById(Guid empresaId, CancellationToken ct)
+    public async Task<UnidadeDto?> GetById(int id, Guid empresaId, CancellationToken ct)
     {
-        var unidades = await _UnitOfWork.Unidades.GetById(u => u.EmpresaId == empresaId &&
-                                                          !u.Ativa, ct);
-        return _mapper.Map<List<UnidadeDto>>(unidades);
+        var unidade = await _unitOfWork.Unidades.GetByPredicateAsync(
+            u => u.Id == id &&
+                 u.EmpresaId == empresaId &&
+                 u.Ativa,
+            ct);
+
+        return unidade is null
+            ? null
+            : _mapper.Map<UnidadeDto>(unidade);
     }
 
-    public async Task<bool> Delete(Guid empresaId, int unidadeId, int usuarioId, CancellationToken ct)
+    public async Task<bool> Delete(int id, Guid empresaId, CancellationToken ct)
     {
-        var unidades = await _UnitOfWork.Unidades.GetById(u => u.Id == unidadeId && u.EmpresaId == empresaId, ct);
+        await _unitOfWork.BeginTransactionAsync(ct);
 
-        var unidade = unidades.FirstOrDefault();
+        try
+        {
+            var unidade = await _unitOfWork.Unidades.GetByPredicateAsync(
+                u => u.Id == id &&
+                     u.EmpresaId == empresaId &&
+                     u.Ativa,
+                ct);
 
-        if (unidade is null || unidade.Ativa)
-            return false;
+            if (unidade is null)
+            {
+                await _unitOfWork.RollbackAsync(ct);
+                return false;
+            }
 
-        unidade.Ativa = false;
+            unidade.Ativa = false;
+            _unitOfWork.Unidades.Update(unidade);
 
-        _UnitOfWork.Unidades.Update(unidade);
-        await _UnitOfWork.CommitAsync(ct);
+            await _unitOfWork.CommitAsync(ct);
 
-        return true;
+            return true;
+        }
+        catch
+        {
+            await _unitOfWork.RollbackAsync(ct);
+            throw;
+        }
     }
-
-
-
 }

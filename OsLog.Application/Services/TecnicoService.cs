@@ -33,13 +33,13 @@ public class TecnicoService : ITecnicoService
 
     public async Task<TecnicoDto?> GetByIdAsync(Guid id, CancellationToken ct)
     {
-        var t = await _uow.Tecnicos.GetById(id, ct);
+        var t = await _uow.Tecnicos.GetByIdAsync(id, ct);
         return t == null ? null : _mapper.Map<TecnicoDto>(t);
     }
 
     public async Task<List<TecnicoDto>> ListAsync(CancellationToken ct)
     {
-        var list = await _uow.Tecnicos.GetAll(ct);
+        var list = await _uow.Tecnicos.GetAllAsync(ct);
         return list.Where(t => !t.FlExcluido)
                    .Select(_mapper.Map<TecnicoDto>)
                    .ToList();
@@ -47,7 +47,7 @@ public class TecnicoService : ITecnicoService
 
     public async Task InativarAsync(Guid id, int usuarioId, CancellationToken ct)
     {
-        var t = await _uow.Tecnicos.GetById(id, ct)
+        var t = await _uow.Tecnicos.GetByIdAsync(id, ct)
                 ?? throw new InvalidOperationException("Técnico não encontrado.");
 
         if (!t.Ativo && t.FlExcluido) return;
