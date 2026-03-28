@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OsLog.API.Extensions;
 using OsLog.Application.Common.Responses;
-using OsLog.Application.Common.Security;
 using OsLog.Application.DTOs.Empresa;
 using OsLog.Application.Ports.ApplicationServices;
 
@@ -40,8 +39,6 @@ public class EmpresaController : BaseApiController
             dto.EnderecoMatriz ??= "Rua das Oficinas, 100 - Centro";
             dto.TelefoneMatriz ??= "(11) 99999-9999";
         }
-
-
 
         if (!ModelState.IsValid)
             return this.ValidationProblemOsLog(ModelState);
