@@ -3,6 +3,10 @@
     <File Path="LEIA-ME.txt" />
     <File Path="NuGet.config" />
   </Folder>
+  <Folder Name="/Solution Items/.github/" />
+  <Folder Name="/Solution Items/.github/workflows/">
+    <File Path="security-audit.yml" />
+  </Folder>
   <Project Path="OsLog.API/OsLog.API.csproj" />
   <Project Path="OsLog.Application.Tests/OsLog.Tests.csproj" />
   <Project Path="OsLog.Application/OsLog.Application.csproj" />

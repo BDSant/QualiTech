@@ -19,6 +19,7 @@ public static class ApiConfiguration
         services.AddApiVersioningConfiguration();
         services.AddOptionsConfiguration(configuration);
         services.AddAuthenticationConfiguration(configuration);
+        services.AddCorsConfiguration(configuration);
 
         return services;
     }
@@ -152,6 +153,33 @@ public static class ApiConfiguration
         services.AddAuthorization();
         services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
         services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+
+        return services;
+    }
+
+    /// <summary>
+    /// CORS restrito
+    /// </summary>
+    /// <param name="services"></param>
+    /// <param name="configuration"></param>
+    /// <returns></returns>
+    private static IServiceCollection AddCorsConfiguration(this IServiceCollection services, IConfiguration configuration)
+    {
+        var origins = configuration
+            .GetSection("Cors:AllowedOrigins")
+            .Get<string[]>()
+            ?? Array.Empty<string>();
+
+        services.AddCors(options =>
+        {
+            options.AddPolicy("CorsPolicy", policy =>
+            {
+                policy
+                    .WithOrigins(origins)
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+            });
+        });
 
         return services;
     }

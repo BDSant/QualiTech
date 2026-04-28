@@ -1,4 +1,5 @@
 ﻿using OsLog.API.Configurations;
+using OsLog.API.Extensions;
 using OsLog.Infrastructure.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +13,8 @@ builder.Services.UseOpenApiDocuments();
 var app = builder.Build();
 
 app.MapGet("/", () => "API OsLog rodando...");
+
+app.UseSecurityHeaders();
 
 app.UseAppConfiguration();
 

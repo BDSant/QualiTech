@@ -1,0 +1,54 @@
+name: Security Audit # [SEC-07]
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - Nova_Proposta_Tecnica
+
+  pull_request:
+    branches:
+      - main
+      - master
+
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Instalar .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Exibir versão .NET
+        run: dotnet --version
+
+      - name: Restaurar dependências
+        run: dotnet restore
+
+      - name: Build Release
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Executar testes
+        run: dotnet test --configuration Release --no-build --verbosity normal
+
+      - name: Auditoria de vulnerabilidades NuGet
+        run: dotnet list package --vulnerable --include-transitive
+
+      - name: Auditoria de pacotes desatualizados
+        run: dotnet list package --outdated
+
+      - name: Publicar artefato de logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-audit-logs
+          path: |
+            **/TestResults/**
