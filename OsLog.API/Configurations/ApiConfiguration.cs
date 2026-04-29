@@ -2,9 +2,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
-using NetDevPack.Security.Jwt.Core.Model;
 using OsLog.API.Authorization;
 using OsLog.Application.Common.Responses;
 using AppJwtOptions = OsLog.Application.Common.Security.Jwt.JwtOptions;
@@ -165,19 +163,29 @@ public static class ApiConfiguration
     /// <returns></returns>
     private static IServiceCollection AddCorsConfiguration(this IServiceCollection services, IConfiguration configuration)
     {
-        var origins = configuration
-            .GetSection("Cors:AllowedOrigins")
-            .Get<string[]>()
-            ?? Array.Empty<string>();
+        var environment = configuration["ASPNETCORE_ENVIRONMENT"];
 
         services.AddCors(options =>
         {
-            options.AddPolicy("CorsPolicy", policy =>
+            options.AddPolicy("DefaultCors", policy =>
             {
-                policy
-                    .WithOrigins(origins)
+                if (environment == "Development")
+                {
+                    policy.WithOrigins(
+                        "https://localhost:7147",
+                        "http://localhost:5147",
+                        "http://localhost:54408")
                     .AllowAnyHeader()
                     .AllowAnyMethod();
+                }
+                else
+                {
+                    policy.WithOrigins(
+                        "https://app.oslog.com.br",
+                        "https://admin.oslog.com.br")
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+                }
             });
         });
 
