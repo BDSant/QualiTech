@@ -27,10 +27,7 @@ public class GlobalExceptionMiddleware
         }
     }
 
-    private static async Task HandleExceptionAsync(
-        HttpContext context,
-        Exception ex,
-        ILogger logger)
+    private static async Task HandleExceptionAsync(HttpContext context, Exception ex, ILogger logger)
     {
         // Log completo para troubleshooting
         logger.LogError(ex, "Erro não tratado na pipeline HTTP.");
